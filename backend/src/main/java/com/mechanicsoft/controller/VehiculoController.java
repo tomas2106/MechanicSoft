@@ -4,9 +4,11 @@ import com.mechanicsoft.entity.Vehiculo;
 import com.mechanicsoft.service.interfaces.VehiculoService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/vehiculos")
 public class VehiculoController {
 

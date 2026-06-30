@@ -1,8 +1,16 @@
+/* ==========================
+   RESET
+========================== */
+
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
 }
+
+/* ==========================
+   BODY
+========================== */
 
 body{
 
@@ -10,25 +18,85 @@ body{
     color:white;
     font-family:Arial, Helvetica, sans-serif;
 
+    overflow-x:hidden;
+
 }
+
+/* ==========================
+   APP
+========================== */
 
 .app{
 
-    height:100vh;
+    min-height:100vh;
 
 }
+
+/* ==========================
+   CONTENEDOR PRINCIPAL
+========================== */
 
 .contenedor{
 
     display:flex;
-    height:calc(100vh - 70px);
+
+    min-height:calc(100vh - 70px);
 
 }
+
+/* ==========================
+   CONTENIDO
+========================== */
 
 .contenido{
 
     flex:1;
+
     padding:30px;
-    overflow:auto;
+
+    overflow-y:auto;
+
+    transition:0.3s;
+
+}
+
+/* ==========================
+   TABLET
+========================== */
+
+@media (max-width:992px){
+
+    .contenido{
+
+        padding:25px;
+
+    }
+
+}
+
+/* ==========================
+   CELULAR
+========================== */
+
+@media (max-width:768px){
+
+    .contenedor{
+
+        display:block;
+
+    }
+
+    .contenido{
+
+        width:100%;
+
+        padding:
+
+            80px   /* espacio para el botón hamburguesa */
+            15px
+            20px
+            15px;
+
+    }
 
 }

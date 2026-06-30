@@ -9,34 +9,38 @@ import ListaVehiculos from "./pages/ListaVehiculos/ListaVehiculos";
 
 function App() {
 
-  const [paginaActual, setPaginaActual] = useState("registro");
+    const [paginaActual, setPaginaActual] = useState("registro");
 
-  return (
+    return (
 
-    <div className="app">
+        <div className="app">
 
-      <Header />
+            <Header />
 
-      <div className="contenedor">
+            <div className="contenedor">
 
-        <Sidebar
-          paginaActual={paginaActual}
-          cambiarPagina={setPaginaActual}
-        />
+                <Sidebar
+                    paginaActual={paginaActual}
+                    cambiarPagina={setPaginaActual}
+                />
 
-        <main className="contenido">
+                <main className="contenido">
 
-          {paginaActual === "registro" && <RegistroVehiculo />}
+                    {paginaActual === "registro" && (
+                        <RegistroVehiculo />
+                    )}
 
-          {paginaActual === "lista" && <ListaVehiculos />}
+                    {paginaActual === "lista" && (
+                        <ListaVehiculos />
+                    )}
 
-        </main>
+                </main>
 
-      </div>
+            </div>
 
-    </div>
+        </div>
 
-  );
+    );
 
 }
 

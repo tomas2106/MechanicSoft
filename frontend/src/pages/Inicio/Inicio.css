@@ -1,0 +1,738 @@
+/* ==========================================
+   INICIO
+========================================== */
+
+.inicio {
+    width: 100%;
+    color: #f8fafc;
+    padding-bottom: 40px;
+}
+
+
+/* ==========================================
+   HERO
+========================================== */
+
+.inicio-hero {
+
+    position: relative;
+
+    min-height: 230px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    overflow: hidden;
+
+    padding: 42px 45px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #263449;
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #172033 0%,
+            #111827 55%,
+            #0f172a 100%
+        );
+
+    margin-bottom: 38px;
+
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+
+/* Línea decorativa */
+
+.inicio-hero::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    top: 0;
+
+    width: 5px;
+    height: 100%;
+
+    background: #2563eb;
+
+}
+
+
+/* ==========================================
+   HERO CONTENIDO
+========================================== */
+
+.hero-contenido {
+
+    position: relative;
+
+    z-index: 2;
+
+    max-width: 650px;
+
+}
+
+
+.hero-etiqueta {
+
+    display: inline-block;
+
+    margin-bottom: 14px;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+
+    color: #60a5fa;
+
+}
+
+
+.hero-contenido h1 {
+
+    margin: 0;
+
+    font-size: 38px;
+
+    line-height: 1.15;
+
+    font-weight: 700;
+
+    letter-spacing: -0.8px;
+
+    color: #f8fafc;
+
+}
+
+
+.hero-contenido h1 span {
+
+    color: #3b82f6;
+
+}
+
+
+.hero-contenido p {
+
+    max-width: 570px;
+
+    margin: 16px 0 0;
+
+    color: #94a3b8;
+
+    font-size: 15px;
+
+    line-height: 1.6;
+
+}
+
+
+/* ==========================================
+   DECORACIÓN HERO
+========================================== */
+
+.hero-decoracion {
+
+    position: absolute;
+
+    right: 50px;
+    top: 50%;
+
+    width: 180px;
+    height: 180px;
+
+    transform: translateY(-50%);
+
+}
+
+
+.hero-circulo {
+
+    position: absolute;
+
+    border-radius: 50%;
+
+    border: 1px solid rgba(59, 130, 246, 0.16);
+
+}
+
+
+.circulo-1 {
+
+    width: 180px;
+    height: 180px;
+
+    right: 0;
+    top: 0;
+}
+
+
+.circulo-2 {
+
+    width: 120px;
+    height: 120px;
+
+    right: 30px;
+    top: 30px;
+
+    background: rgba(37, 99, 235, 0.06);
+
+}
+
+
+.hero-icono {
+
+    position: absolute;
+
+    width: 65px;
+    height: 65px;
+
+    right: 58px;
+    top: 58px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 16px;
+
+    background: #1e3a8a;
+
+    color: #93c5fd;
+
+    box-shadow:
+        0 8px 25px rgba(37, 99, 235, 0.2);
+
+}
+
+
+.hero-icono svg {
+
+    width: 31px;
+    height: 31px;
+
+}
+
+
+/* ==========================================
+   SECCIONES
+========================================== */
+
+.inicio-seccion {
+
+    margin-bottom: 38px;
+
+}
+
+
+.seccion-titulo {
+
+    margin-bottom: 18px;
+
+}
+
+
+.seccion-titulo h2,
+.actividad-header h2 {
+
+    margin: 0;
+
+    color: #f8fafc;
+
+    font-size: 21px;
+
+    font-weight: 650;
+
+}
+
+
+.seccion-titulo p,
+.actividad-header p {
+
+    margin: 7px 0 0;
+
+    color: #64748b;
+
+    font-size: 13px;
+
+}
+
+
+/* ==========================================
+   TARJETAS PRINCIPALES
+========================================== */
+
+.inicio-tarjetas {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 18px;
+
+}
+
+
+.inicio-tarjeta {
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 17px;
+
+    min-height: 125px;
+
+    padding: 22px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #263449;
+
+    border-radius: 14px;
+
+    background: #111827;
+
+    cursor: default;
+
+    transition:
+        transform .2s ease,
+        border-color .2s ease,
+        background .2s ease,
+        box-shadow .2s ease;
+
+}
+
+
+.inicio-tarjeta:hover {
+
+    transform: translateY(-3px);
+
+    border-color: #334d70;
+
+    background: #131d2e;
+
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.16);
+
+}
+
+
+/* ==========================================
+   ICONOS TARJETAS
+========================================== */
+
+.tarjeta-icono {
+
+    width: 48px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+}
+
+
+.tarjeta-icono svg {
+
+    width: 23px;
+    height: 23px;
+
+}
+
+
+/* Azul */
+
+.icono-clientes {
+
+    background: #172554;
+
+    color: #60a5fa;
+
+}
+
+
+/* Azul más claro */
+
+.icono-vehiculos {
+
+    background: #172554;
+
+    color: #93c5fd;
+
+}
+
+
+/* Azul oscuro */
+
+.icono-ordenes {
+
+    background: #1e293b;
+
+    color: #60a5fa;
+
+}
+
+
+/* ==========================================
+   CONTENIDO TARJETAS
+========================================== */
+
+.tarjeta-contenido {
+
+    min-width: 0;
+
+}
+
+
+.tarjeta-contenido span {
+
+    display: block;
+
+    color: #f8fafc;
+
+    font-size: 15px;
+
+    font-weight: 650;
+
+}
+
+
+.tarjeta-contenido p {
+
+    margin: 6px 0 0;
+
+    color: #64748b;
+
+    font-size: 12.5px;
+
+    line-height: 1.45;
+
+}
+
+
+/* ==========================================
+   FLECHA
+========================================== */
+
+.tarjeta-flecha {
+
+    margin-left: auto;
+
+    color: #475569;
+
+    font-size: 20px;
+
+    transition:
+        color .2s ease,
+        transform .2s ease;
+
+}
+
+
+.inicio-tarjeta:hover .tarjeta-flecha {
+
+    color: #60a5fa;
+
+    transform: translateX(3px);
+
+}
+
+
+/* ==========================================
+   ACTIVIDAD / HERRAMIENTAS
+========================================== */
+
+.actividad {
+
+    padding: 28px;
+
+    border: 1px solid #263449;
+
+    border-radius: 16px;
+
+    background: #0f172a;
+
+}
+
+
+.actividad-header {
+
+    margin-bottom: 24px;
+
+}
+
+
+.subtitulo-seccion {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #60a5fa;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+
+}
+
+
+/* ==========================================
+   GRID INFORMACIÓN
+========================================== */
+
+.inicio-info {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+
+}
+
+
+/* ==========================================
+   ITEMS
+========================================== */
+
+.info-item {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 15px;
+
+    padding: 18px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #1e293b;
+
+    border-radius: 12px;
+
+    background: #111827;
+
+    transition:
+        border-color .2s ease,
+        background .2s ease,
+        transform .2s ease;
+
+}
+
+
+.info-item:hover {
+
+    border-color: #334155;
+
+    background: #131d2e;
+
+    transform: translateY(-2px);
+
+}
+
+
+/* ==========================================
+   ICONO INFORMACIÓN
+========================================== */
+
+.info-icono {
+
+    width: 40px;
+    height: 40px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: #172554;
+
+    color: #60a5fa;
+
+}
+
+
+.info-icono svg {
+
+    width: 20px;
+    height: 20px;
+
+}
+
+
+/* ==========================================
+   TEXTO INFORMACIÓN
+========================================== */
+
+.info-item h3 {
+
+    margin: 1px 0 6px;
+
+    color: #e2e8f0;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+}
+
+
+.info-item p {
+
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 12.5px;
+
+    line-height: 1.55;
+
+}
+
+
+/* ==========================================
+   RESPONSIVE
+========================================== */
+
+@media (max-width: 1000px) {
+
+    .inicio-tarjetas {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+    }
+
+    .inicio-tarjeta:last-child {
+
+        grid-column: span 2;
+
+    }
+
+    .hero-decoracion {
+
+        right: 20px;
+
+        opacity: .5;
+
+    }
+
+}
+
+
+@media (max-width: 800px) {
+
+    .inicio-hero {
+
+        padding: 35px 30px;
+
+    }
+
+    .hero-contenido h1 {
+
+        font-size: 31px;
+
+    }
+
+    .hero-decoracion {
+
+        display: none;
+
+    }
+
+    .inicio-info {
+
+        grid-template-columns: 1fr;
+
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .inicio-hero {
+
+        min-height: auto;
+
+        padding: 30px 24px;
+
+        margin-bottom: 28px;
+
+    }
+
+    .hero-contenido h1 {
+
+        font-size: 27px;
+
+    }
+
+    .hero-contenido p {
+
+        font-size: 14px;
+
+    }
+
+    .inicio-tarjetas {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .inicio-tarjeta:last-child {
+
+        grid-column: auto;
+
+    }
+
+    .inicio-tarjeta {
+
+        min-height: 110px;
+
+    }
+
+    .actividad {
+
+        padding: 20px;
+
+    }
+
+    .info-item {
+
+        padding: 16px;
+
+    }
+
+}
+

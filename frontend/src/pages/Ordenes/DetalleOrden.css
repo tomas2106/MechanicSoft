@@ -1,0 +1,426 @@
+/* ==========================
+   CONTENEDOR
+========================== */
+
+.detalle-orden {
+
+    width: 100%;
+
+    color: #f8fafc;
+
+}
+
+
+/* ==========================
+   VOLVER
+========================== */
+
+.btn-volver-orden {
+
+    border: none;
+
+    background: transparent;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    padding: 0;
+
+    margin-bottom: 25px;
+
+    cursor: pointer;
+
+    transition: .2s;
+
+}
+
+.btn-volver-orden:hover {
+
+    color: #f8fafc;
+
+}
+
+
+/* ==========================
+   HEADER
+========================== */
+
+.detalle-orden-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    gap: 20px;
+
+    margin-bottom: 25px;
+
+}
+
+.numero-orden {
+
+    display: inline-block;
+
+    margin-bottom: 8px;
+
+    color: #64748b;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+}
+
+.detalle-orden-header h1 {
+
+    margin: 0;
+
+    font-size: 30px;
+
+    color: #f8fafc;
+
+    letter-spacing: .5px;
+
+}
+
+.detalle-orden-header p {
+
+    margin: 7px 0 0;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+
+}
+
+
+/* ==========================
+   ESTADO
+========================== */
+
+.detalle-estado {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 8px 14px;
+
+    border-radius: 20px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+
+}
+
+
+/* RECIBIDO */
+
+.estado-RECIBIDO {
+
+    background: #172554;
+
+    border: 1px solid #1d4ed8;
+
+    color: #93c5fd;
+
+}
+
+
+/* DIAGNOSTICO */
+
+.estado-DIAGNOSTICO {
+
+    background: #422006;
+
+    border: 1px solid #a16207;
+
+    color: #fde68a;
+
+}
+
+
+/* EN REPARACION */
+
+.estado-EN_REPARACION {
+
+    background: #3b0764;
+
+    border: 1px solid #7e22ce;
+
+    color: #d8b4fe;
+
+}
+
+
+/* LISTO */
+
+.estado-LISTO_PARA_ENTREGA {
+
+    background: #052e16;
+
+    border: 1px solid #15803d;
+
+    color: #86efac;
+
+}
+
+
+/* ENTREGADO */
+
+.estado-ENTREGADO {
+
+    background: #064e3b;
+
+    border: 1px solid #059669;
+
+    color: #6ee7b7;
+
+}
+
+
+/* CANCELADO */
+
+.estado-CANCELADO {
+
+    background: #450a0a;
+
+    border: 1px solid #b91c1c;
+
+    color: #fca5a5;
+
+}
+
+
+/* ==========================
+   GRID
+========================== */
+
+.detalle-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+
+}
+
+
+/* ==========================
+   TARJETAS
+========================== */
+
+.detalle-card {
+
+    background: #111827;
+
+    border: 1px solid #334155;
+
+    border-radius: 14px;
+
+    padding: 22px;
+
+    margin-bottom: 20px;
+
+}
+
+.detalle-card h2 {
+
+    margin: 0 0 20px;
+
+    color: #f8fafc;
+
+    font-size: 17px;
+
+    font-weight: 700;
+
+    padding-bottom: 14px;
+
+    border-bottom: 1px solid #1e293b;
+
+}
+
+
+/* ==========================
+   DATOS
+========================== */
+
+.datos-grid {
+
+    display: grid;
+
+    grid-template-columns: repeat(2, 1fr);
+
+    gap: 14px;
+
+}
+
+
+.dato {
+
+    background: #1e293b;
+
+    border: 1px solid #334155;
+
+    border-radius: 9px;
+
+    padding: 13px;
+
+}
+
+
+.dato span {
+
+    display: block;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    margin-bottom: 6px;
+
+}
+
+
+.dato strong {
+
+    display: block;
+
+    color: #f8fafc;
+
+    font-size: 14px;
+
+    word-break: break-word;
+
+}
+
+
+.dato-completo {
+
+    grid-column: 1 / -1;
+
+}
+
+
+/* ==========================
+   TEXTOS
+========================== */
+
+.texto-detalle {
+
+    background: #0f172a;
+
+    border: 1px solid #334155;
+
+    border-radius: 9px;
+
+    padding: 16px;
+
+    min-height: 70px;
+
+    color: #cbd5e1;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+    white-space: pre-wrap;
+
+}
+
+
+/* ==========================
+   ESTADOS DE CARGA
+========================== */
+
+.orden-estado {
+
+    padding: 40px 20px;
+
+    background: #111827;
+
+    border: 1px solid #334155;
+
+    border-radius: 12px;
+
+    text-align: center;
+
+    color: #94a3b8;
+
+}
+
+
+.orden-estado.error {
+
+    color: #fca5a5;
+
+    border-color: #7f1d1d;
+
+}
+
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media (max-width: 900px) {
+
+    .detalle-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .detalle-orden-header {
+
+        flex-direction: column;
+
+    }
+
+
+    .detalle-orden-header h1 {
+
+        font-size: 25px;
+
+    }
+
+
+    .datos-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+    .dato-completo {
+
+        grid-column: auto;
+
+    }
+
+
+    .detalle-card {
+
+        padding: 17px;
+
+    }
+
+}

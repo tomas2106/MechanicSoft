@@ -22,170 +22,342 @@ export default function ListaVehiculos() {
     }, []);
 
     const cargarVehiculos = async () => {
+
         try {
+
             const respuesta = await obtenerVehiculos();
+
             setVehiculos(respuesta?.data || []);
+
         } catch (error) {
-            console.error(error);
+
+            console.error("Error cargando vehículos:", error);
+
             alert("Error cargando los vehículos.");
+
         }
+
     };
 
     const eliminar = async (id) => {
-        const confirmar = window.confirm("¿Desea eliminar este vehículo?");
+
+        const confirmar = window.confirm(
+            "¿Desea eliminar este vehículo?"
+        );
+
         if (!confirmar) return;
 
         try {
+
             await eliminarVehiculo(id);
-            cargarVehiculos();
+
+            await cargarVehiculos();
+
         } catch (error) {
-            console.error(error);
-            alert("No fue posible eliminar.");
+
+            console.error("Error eliminando vehículo:", error);
+
+            alert("No fue posible eliminar el vehículo.");
+
         }
+
     };
 
     const abrirModal = (vehiculo) => {
+
         setVehiculoSeleccionado(vehiculo);
+
         setModalAbierto(true);
+
     };
 
     const cerrarModal = () => {
-        setModalAbierto(false);
-        setVehiculoSeleccionado(null);
-    };
 
-    const resumirMotivo = (texto) => {
-        if (!texto) return "";
-        const palabras = texto.split(" ");
-        return palabras.length <= 3
-            ? texto
-            : palabras.slice(0, 3).join(" ") + "...";
+        setModalAbierto(false);
+
+        setVehiculoSeleccionado(null);
+
     };
 
     const vehiculosFiltrados = vehiculos
         .filter((vehiculo) => {
-            const coincidePlaca = vehiculo?.placa
-                ?.toLowerCase()
-                .includes(busqueda.toLowerCase());
+
+            const textoBusqueda = busqueda
+                .toLowerCase()
+                .trim();
+
+            const placa = vehiculo?.placa
+                ?.toLowerCase() || "";
+
+            const marca = vehiculo?.marca
+                ?.toLowerCase() || "";
+
+            const modelo = vehiculo?.modelo
+                ?.toLowerCase() || "";
+
+            const propietario = vehiculo?.cliente?.nombre
+                ?.toLowerCase() || "";
+
+            const coincideBusqueda =
+                placa.includes(textoBusqueda) ||
+                marca.includes(textoBusqueda) ||
+                modelo.includes(textoBusqueda) ||
+                propietario.includes(textoBusqueda);
 
             let coincideFecha = true;
 
             if (fecha) {
+
                 const fechaVehiculo = vehiculo?.createdAt
-                    ? new Date(vehiculo.createdAt).toISOString().split("T")[0]
+                    ? new Date(vehiculo.createdAt)
+                        .toISOString()
+                        .split("T")[0]
                     : null;
 
                 coincideFecha = fechaVehiculo === fecha;
+
             }
 
-            return coincidePlaca && coincideFecha;
+            return coincideBusqueda && coincideFecha;
+
         })
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        .sort(
+            (a, b) =>
+                new Date(b.createdAt) -
+                new Date(a.createdAt)
+        );
 
     return (
+
         <div className="lista">
 
-            <h1>Vehículos Registrados</h1>
+            <div className="encabezado-lista">
 
-            {/* FILTROS RESPONSIVE */}
+                <div>
+
+                    <h1>Vehículos</h1>
+
+                    <p>
+                        Consulta y administra los vehículos registrados.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            {/* FILTROS */}
+
             <div className="filtros">
 
                 <input
                     className="buscar"
                     type="text"
-                    placeholder="Buscar por placa..."
+                    placeholder="Buscar por placa, marca, modelo o propietario..."
                     value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
+                    onChange={(e) =>
+                        setBusqueda(e.target.value)
+                    }
                 />
 
                 <input
                     className="buscar"
                     type="date"
                     value={fecha}
-                    onChange={(e) => setFecha(e.target.value)}
+                    onChange={(e) =>
+                        setFecha(e.target.value)
+                    }
                 />
 
                 <button
                     className="btn-ver"
-                    onClick={() => setFecha("")}
+                    onClick={() => {
+
+                        setBusqueda("");
+                        setFecha("");
+
+                    }}
                 >
-                    Limpiar Fecha
+                    Limpiar filtros
                 </button>
 
             </div>
 
+
+            {/* CONTADOR */}
+
+            <div className="contador">
+
+                <span>
+                    Vehículos encontrados:
+                </span>
+
+                <strong>
+                    {vehiculosFiltrados.length}
+                </strong>
+
+            </div>
+
+
             {/* TABLA */}
-            <div className="tabla-container">
+
+            <div className="tabla-contenedor">
+
                 <table>
 
                     <thead>
+
                         <tr>
+
                             <th>Placa</th>
+
                             <th>Marca</th>
+
                             <th>Modelo</th>
+
                             <th>Color</th>
+
                             <th>Km</th>
+
                             <th>Propietario</th>
+
                             <th>Teléfono</th>
-                            <th>Fecha</th>
-                            <th>Motivo</th>
+
+                            <th>Fecha registro</th>
+
                             <th>Acciones</th>
+
                         </tr>
+
                     </thead>
 
+
                     <tbody>
+
                         {vehiculosFiltrados.length === 0 ? (
+
                             <tr>
-                                <td colSpan="10">
+
+                                <td
+                                    colSpan="9"
+                                    className="sin-resultados"
+                                >
                                     No existen vehículos registrados.
                                 </td>
+
                             </tr>
+
                         ) : (
-                            vehiculosFiltrados.map((vehiculo) => (
-                                <tr key={vehiculo.id}>
-                                    <td>{vehiculo.placa}</td>
-                                    <td>{vehiculo.marca}</td>
-                                    <td>{vehiculo.modelo}</td>
-                                    <td>{vehiculo.color}</td>
-                                    <td>{vehiculo.kilometraje}</td>
-                                    <td>{vehiculo.propietarioActual}</td>
-                                    <td>{vehiculo.telefonoActual}</td>
-                                    <td>
-                                        {vehiculo.createdAt
-                                            ? new Date(vehiculo.createdAt).toLocaleDateString()
-                                            : ""}
-                                    </td>
-                                    <td>{resumirMotivo(vehiculo.motivoIngreso)}</td>
 
-                                    {/* ACCIONES */}
-                                    <td className="acciones">
-                                        <button
-                                            className="btn-ver"
-                                            onClick={() => abrirModal(vehiculo)}
-                                        >
-                                            Ver
-                                        </button>
+                            vehiculosFiltrados.map(
+                                (vehiculo) => (
 
-                                        <button className="btn-editar">
-                                            Editar
-                                        </button>
+                                    <tr key={vehiculo.id}>
 
-                                        <button
-                                            className="btn-eliminar"
-                                            onClick={() => eliminar(vehiculo.id)}
-                                        >
-                                            Eliminar
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))
+                                        <td>
+
+                                            <strong>
+                                                {vehiculo.placa}
+                                            </strong>
+
+                                        </td>
+
+                                        <td>
+                                            {vehiculo.marca}
+                                        </td>
+
+                                        <td>
+                                            {vehiculo.modelo}
+                                        </td>
+
+                                        <td>
+                                            {vehiculo.color || "—"}
+                                        </td>
+
+                                        <td>
+                                            {vehiculo.kilometraje?.toLocaleString(
+                                                "es-CO"
+                                            )} km
+                                        </td>
+
+                                        <td>
+                                            {vehiculo.cliente?.nombre || "—"}
+                                        </td>
+
+                                        <td>
+                                            {vehiculo.cliente?.telefono || "—"}
+                                        </td>
+
+                                        <td>
+
+                                            {vehiculo.createdAt
+                                                ? new Date(
+                                                    vehiculo.createdAt
+                                                ).toLocaleDateString(
+                                                    "es-CO"
+                                                )
+                                                : "—"
+                                            }
+
+                                        </td>
+
+                                        <td>
+
+                                            <div className="acciones">
+
+                                                <button
+                                                    className="btn-ver"
+                                                    onClick={() =>
+                                                        abrirModal(
+                                                            vehiculo
+                                                        )
+                                                    }
+                                                >
+                                                    Ver
+                                                </button>
+
+                                                <button
+                                                    className="btn-editar"
+                                                    onClick={() =>
+                                                        alert(
+                                                            "La edición de vehículos la construiremos después."
+                                                        )
+                                                    }
+                                                >
+                                                    Editar
+                                                </button>
+
+                                                <button
+                                                    className="btn-eliminar"
+                                                    onClick={() =>
+                                                        eliminar(
+                                                            vehiculo.id
+                                                        )
+                                                    }
+                                                >
+                                                    Eliminar
+                                                </button>
+
+                                            </div>
+
+                                        </td>
+
+                                    </tr>
+
+                                )
+                            )
+
                         )}
+
                     </tbody>
 
                 </table>
+
             </div>
 
+
             {/* MODAL */}
+
             <ModalVehiculo
                 abierto={modalAbierto}
                 vehiculo={vehiculoSeleccionado}
@@ -193,5 +365,7 @@ export default function ListaVehiculos() {
             />
 
         </div>
+
     );
+
 }

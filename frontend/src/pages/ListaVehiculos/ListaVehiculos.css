@@ -1,127 +1,289 @@
 .lista {
-    color: white;
-    padding: 20px;
+    width: 100%;
+    color: #f8fafc;
 }
 
-/* INPUT BUSCAR */
+
+/* =========================
+   ENCABEZADO
+========================= */
+
+.encabezado-lista {
+    margin-bottom: 25px;
+}
+
+.encabezado-lista h1 {
+    margin: 0;
+    font-size: 28px;
+    color: #f8fafc;
+}
+
+.encabezado-lista p {
+    margin-top: 8px;
+    color: #94a3b8;
+}
+
+
+/* =========================
+   FILTROS
+========================= */
+
+.filtros {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
 .buscar {
-    width: 350px;
-    max-width: 100%;
-    padding: 12px;
-    margin: 25px 0;
-    background: #1E293B;
-    border: none;
-    color: white;
+    background: #1e293b;
+    color: #f8fafc;
+    border: 1px solid #334155;
     border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 14px;
     outline: none;
 }
 
-/* TABLA BASE */
+.buscar::placeholder {
+    color: #64748b;
+}
+
+.buscar:focus {
+    border-color: #64748b;
+}
+
+
+/* =========================
+   CONTADOR
+========================= */
+
+.contador {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 15px;
+
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.contador strong {
+    color: #f8fafc;
+}
+
+
+/* =========================
+   TABLA
+========================= */
+
+.tabla-contenedor {
+    width: 100%;
+    overflow-x: auto;
+
+    background: #111827;
+
+    border: 1px solid #334155;
+
+    border-radius: 12px;
+}
+
+
 table {
     width: 100%;
     border-collapse: collapse;
-    background: #1E293B;
-    border-radius: 12px;
-    overflow: hidden;
+
+    min-width: 1050px;
 }
 
-/* HEADER */
+
 thead {
-    background: #F97316;
+    background: #172033;
 }
+
 
 th {
-    padding: 15px;
     text-align: left;
+
+    padding: 15px 14px;
+
+    color: #94a3b8;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.4px;
+
+    border-bottom: 1px solid #334155;
+
     white-space: nowrap;
 }
 
-/* CELDAS */
+
 td {
-    padding: 15px;
-    border-bottom: 1px solid #334155;
-    vertical-align: middle;
+    padding: 15px 14px;
+
+    color: #cbd5e1;
+
+    font-size: 14px;
+
+    border-bottom: 1px solid #1e293b;
+
+    white-space: nowrap;
 }
+
+
+tbody tr {
+    transition: background 0.2s ease;
+}
+
 
 tbody tr:hover {
-    background: #334155;
+    background: #172033;
 }
 
-/* BOTONES */
-td button {
-    margin-right: 10px;
-    background: #2563EB;
-    color: white;
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+td strong {
+    color: #f8fafc;
+}
+
+
+/* =========================
+   ACCIONES
+========================= */
+
+.acciones {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    min-width: 245px;
+}
+
+
+.acciones button {
     border: none;
-    padding: 8px 15px;
-    border-radius: 6px;
+
+    border-radius: 7px;
+
+    padding: 8px 12px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
     cursor: pointer;
-    transition: 0.2s;
+
+    white-space: nowrap;
+
+    transition:
+        background 0.2s ease,
+        transform 0.15s ease;
 }
 
-td button:hover {
-    opacity: 0.85;
+
+.acciones button:hover {
+    transform: translateY(-1px);
 }
 
-/* ========================= */
-/* 📱 RESPONSIVE TABLET */
-/* ========================= */
-@media (max-width: 900px) {
+
+/* VER */
+
+.btn-ver {
+    background: #334155;
+
+    color: #f8fafc;
+}
+
+
+.btn-ver:hover {
+    background: #475569;
+}
+
+
+/* EDITAR */
+
+.btn-editar {
+    background: #1d4ed8;
+
+    color: white;
+}
+
+
+.btn-editar:hover {
+    background: #2563eb;
+}
+
+
+/* ELIMINAR */
+
+.btn-eliminar {
+    background: #7f1d1d;
+
+    color: #fecaca;
+}
+
+
+.btn-eliminar:hover {
+    background: #991b1b;
+}
+
+
+/* =========================
+   SIN RESULTADOS
+========================= */
+
+.sin-resultados {
+    text-align: center;
+
+    padding: 40px 20px;
+
+    color: #64748b;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+
+    .encabezado-lista h1 {
+        font-size: 24px;
+    }
+
+
+    .filtros {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
     .buscar {
         width: 100%;
     }
 
-    th, td {
-        padding: 12px;
-        font-size: 14px;
-    }
-}
 
-/* ========================= */
-/* 📱 RESPONSIVE MÓVIL */
-/* ========================= */
-@media (max-width: 600px) {
-
-    .lista {
-        padding: 10px;
-    }
-
-    .buscar {
-        width: 100%;
-        margin: 15px 0;
-    }
-
-    /* 🔥 TABLA RESPONSIVE CON SCROLL */
-    table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
-    th, td {
-        padding: 10px;
-        font-size: 13px;
-    }
-
-    td button {
-        padding: 6px 10px;
-        font-size: 12px;
-        margin-right: 5px;
-    }
-}
-
-/* ========================= */
-/* 📱 MÓVIL PEQUEÑO */
-/* ========================= */
-@media (max-width: 400px) {
-
-    th, td {
-        font-size: 12px;
-    }
-
-    td button {
-        display: block;
-        margin-bottom: 5px;
+    .filtros .btn-ver {
         width: 100%;
     }
+
+
+    .tabla-contenedor {
+        border-radius: 10px;
+    }
+
 }

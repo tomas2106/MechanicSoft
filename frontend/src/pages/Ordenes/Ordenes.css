@@ -1,0 +1,1065 @@
+/* =========================================
+   PÁGINA
+========================================= */
+
+.ordenes-page {
+
+    width: 100%;
+
+    color: #f8fafc;
+
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.ordenes-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 20px;
+
+    margin-bottom: 28px;
+
+}
+
+
+.ordenes-header h1 {
+
+    margin: 0 0 7px;
+
+    font-size: 30px;
+
+    color: #f8fafc;
+
+}
+
+
+.ordenes-header p {
+
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+
+}
+
+
+/* =========================================
+   BOTÓN NUEVA ORDEN
+========================================= */
+
+.btn-nueva-orden {
+
+    border: none;
+
+    border-radius: 9px;
+
+    padding: 12px 20px;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: .2s ease;
+
+}
+
+
+.btn-nueva-orden:hover {
+
+    background: #1d4ed8;
+
+    transform: translateY(-1px);
+
+}
+
+
+/* =========================================
+   ESTADÍSTICAS
+========================================= */
+
+.ordenes-estadisticas {
+
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr);
+
+    gap: 15px;
+
+    margin-bottom: 22px;
+
+}
+
+
+.estadistica {
+
+    background: #111827;
+
+    border: 1px solid #1f2937;
+
+    border-radius: 12px;
+
+    padding: 18px;
+
+}
+
+
+.estadistica span {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #94a3b8;
+
+    font-size: 13px;
+
+}
+
+
+.estadistica strong {
+
+    color: #f8fafc;
+
+    font-size: 25px;
+
+}
+
+
+/* =========================================
+   FILTROS
+========================================= */
+
+.ordenes-filtros {
+
+    display: flex;
+
+    gap: 12px;
+
+    margin-bottom: 22px;
+
+}
+
+
+.ordenes-filtros input,
+.ordenes-filtros select {
+
+    background: #111827;
+
+    border: 1px solid #334155;
+
+    border-radius: 8px;
+
+    color: #f8fafc;
+
+    padding: 12px 14px;
+
+    font-size: 14px;
+
+    outline: none;
+
+}
+
+
+.ordenes-filtros input {
+
+    flex: 1;
+
+}
+
+
+.ordenes-filtros input::placeholder {
+
+    color: #64748b;
+
+}
+
+
+.ordenes-filtros input:focus,
+.ordenes-filtros select:focus {
+
+    border-color: #3b82f6;
+
+}
+
+
+/* =========================================
+   ESTADOS
+========================================= */
+
+.ordenes-estado {
+
+    background: #111827;
+
+    border: 1px solid #1f2937;
+
+    border-radius: 12px;
+
+    padding: 40px 20px;
+
+    text-align: center;
+
+    color: #94a3b8;
+
+}
+
+
+.ordenes-estado h3 {
+
+    margin: 0 0 8px;
+
+    color: #e2e8f0;
+
+}
+
+
+.ordenes-estado p {
+
+    margin: 0;
+
+}
+
+
+.ordenes-estado.error {
+
+    color: #fca5a5;
+
+    border-color: #7f1d1d;
+
+}
+
+
+/* =========================================
+   LISTA
+========================================= */
+
+.ordenes-lista {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 15px;
+
+}
+
+
+/* =========================================
+   CARD ORDEN
+========================================= */
+
+.orden-card {
+
+    background: #111827;
+
+    border: 1px solid #1f2937;
+
+    border-radius: 14px;
+
+    padding: 20px;
+
+    transition: .2s ease;
+
+}
+
+
+.orden-card:hover {
+
+    border-color: #334155;
+
+}
+
+
+/* =========================================
+   HEADER CARD
+========================================= */
+
+.orden-card-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    gap: 15px;
+
+    padding-bottom: 17px;
+
+    border-bottom: 1px solid #1f2937;
+
+}
+
+
+.orden-id {
+
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #64748b;
+
+    font-size: 12px;
+
+}
+
+
+.orden-card-header h2 {
+
+    margin: 0;
+
+    color: #f8fafc;
+
+    font-size: 21px;
+
+    letter-spacing: .5px;
+
+}
+
+
+.orden-card-header p {
+
+    margin: 5px 0 0;
+
+    color: #94a3b8;
+
+    font-size: 13px;
+
+}
+
+
+/* =========================================
+   ESTADOS
+========================================= */
+
+.estado-orden {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    padding: 6px 11px;
+
+    border-radius: 20px;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+
+}
+
+
+.estado-RECIBIDO {
+
+    background: #172554;
+
+    color: #93c5fd;
+
+    border: 1px solid #1e40af;
+
+}
+
+
+.estado-DIAGNOSTICO {
+
+    background: #312e81;
+
+    color: #c4b5fd;
+
+    border: 1px solid #4338ca;
+
+}
+
+
+.estado-EN_REPARACION {
+
+    background: #164e63;
+
+    color: #67e8f9;
+
+    border: 1px solid #0e7490;
+
+}
+
+
+.estado-LISTO_PARA_ENTREGA {
+
+    background: #064e3b;
+
+    color: #6ee7b7;
+
+    border: 1px solid #047857;
+
+}
+
+
+.estado-ENTREGADO {
+
+    background: #1e293b;
+
+    color: #cbd5e1;
+
+    border: 1px solid #475569;
+
+}
+
+
+.estado-CANCELADO {
+
+    background: #450a0a;
+
+    color: #fca5a5;
+
+    border: 1px solid #991b1b;
+
+}
+
+
+/* =========================================
+   INFORMACIÓN
+========================================= */
+
+.orden-card-info {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 12px;
+
+    padding: 17px 0;
+
+}
+
+
+.orden-card-info > div {
+
+    background: #0f172a;
+
+    border: 1px solid #1f2937;
+
+    border-radius: 8px;
+
+    padding: 12px;
+
+    min-width: 0;
+
+}
+
+
+.orden-card-info span {
+
+    display: block;
+
+    margin-bottom: 6px;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+}
+
+
+.orden-card-info strong {
+
+    display: block;
+
+    color: #e2e8f0;
+
+    font-size: 13px;
+
+    line-height: 1.4;
+
+    word-break: break-word;
+
+}
+
+
+/* =========================================
+   FOOTER CARD
+========================================= */
+
+.orden-card-footer {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-end;
+
+    gap: 20px;
+
+    padding-top: 17px;
+
+    border-top: 1px solid #1f2937;
+
+}
+
+
+.cambiar-estado {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+
+}
+
+
+.cambiar-estado label {
+
+    color: #94a3b8;
+
+    font-size: 12px;
+
+}
+
+
+.cambiar-estado select {
+
+    min-width: 190px;
+
+    padding: 9px 11px;
+
+    background: #0f172a;
+
+    border: 1px solid #334155;
+
+    border-radius: 7px;
+
+    color: #f8fafc;
+
+    outline: none;
+
+}
+
+
+.cambiar-estado select:focus {
+
+    border-color: #3b82f6;
+
+}
+
+
+/* =========================================
+   VER DETALLE
+========================================= */
+
+.btn-ver-orden {
+
+    border: 1px solid #334155;
+
+    background: #1e293b;
+
+    color: #e2e8f0;
+
+    border-radius: 8px;
+
+    padding: 10px 15px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: .2s ease;
+
+}
+
+
+.btn-ver-orden:hover {
+
+    background: #334155;
+
+    border-color: #475569;
+
+}
+
+
+/* =========================================
+   MODAL
+========================================= */
+
+.modal-overlay {
+
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 3000;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 25px;
+
+    background: rgba(2, 6, 23, .78);
+
+    backdrop-filter: blur(4px);
+
+}
+
+
+.modal-orden {
+
+    width: 100%;
+
+    max-width: 750px;
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    background: #111827;
+
+    border: 1px solid #334155;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 25px 60px rgba(0, 0, 0, .45);
+
+}
+
+
+/* =========================================
+   HEADER MODAL
+========================================= */
+
+.modal-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    gap: 20px;
+
+    padding: 23px;
+
+    border-bottom: 1px solid #1f2937;
+
+}
+
+
+.modal-header h2 {
+
+    margin: 0 0 6px;
+
+    color: #f8fafc;
+
+    font-size: 21px;
+
+}
+
+
+.modal-header p {
+
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 13px;
+
+}
+
+
+.btn-cerrar-modal {
+
+    width: 35px;
+
+    height: 35px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #1e293b;
+
+    color: #cbd5e1;
+
+    font-size: 23px;
+
+    cursor: pointer;
+
+}
+
+
+.btn-cerrar-modal:hover {
+
+    background: #334155;
+
+}
+
+
+/* =========================================
+   ERROR FORMULARIO
+========================================= */
+
+.error-formulario {
+
+    margin: 18px 23px 0;
+
+    padding: 11px 13px;
+
+    border: 1px solid #7f1d1d;
+
+    border-radius: 8px;
+
+    background: #450a0a;
+
+    color: #fca5a5;
+
+    font-size: 13px;
+
+}
+
+
+/* =========================================
+   FORMULARIO
+========================================= */
+
+.formulario-orden {
+
+    padding: 23px;
+
+}
+
+
+.formulario-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, 1fr);
+
+    gap: 16px;
+
+}
+
+
+.campo-completo {
+
+    margin-bottom: 16px;
+
+}
+
+
+.campo-orden {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+
+    margin-bottom: 16px;
+
+}
+
+
+.campo-orden label {
+
+    color: #cbd5e1;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+}
+
+
+.campo-orden label span {
+
+    margin-left: 6px;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    font-weight: 400;
+
+}
+
+
+.campo-orden input,
+.campo-orden select,
+.campo-orden textarea {
+
+    width: 100%;
+
+    background: #0f172a;
+
+    border: 1px solid #334155;
+
+    border-radius: 8px;
+
+    padding: 11px 12px;
+
+    color: #f8fafc;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    outline: none;
+
+}
+
+
+.campo-orden input:focus,
+.campo-orden select:focus,
+.campo-orden textarea:focus {
+
+    border-color: #3b82f6;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(59, 130, 246, .12);
+
+}
+
+
+.campo-orden textarea {
+
+    min-height: 90px;
+
+    resize: vertical;
+
+}
+
+
+.campo-orden input::placeholder,
+.campo-orden textarea::placeholder {
+
+    color: #64748b;
+
+}
+
+
+/* =========================================
+   FOOTER MODAL
+========================================= */
+
+.modal-footer {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 8px;
+
+    padding-top: 18px;
+
+    border-top: 1px solid #1f2937;
+
+}
+
+
+.btn-cancelar-orden,
+.btn-guardar-orden {
+
+    padding: 11px 18px;
+
+    border-radius: 8px;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+}
+
+
+.btn-cancelar-orden {
+
+    background: #1e293b;
+
+    border: 1px solid #334155;
+
+    color: #cbd5e1;
+
+}
+
+
+.btn-cancelar-orden:hover {
+
+    background: #334155;
+
+}
+
+
+.btn-guardar-orden {
+
+    background: #2563eb;
+
+    border: 1px solid #2563eb;
+
+    color: white;
+
+}
+
+
+.btn-guardar-orden:hover {
+
+    background: #1d4ed8;
+
+}
+
+
+.btn-guardar-orden:disabled,
+.btn-cancelar-orden:disabled {
+
+    opacity: .6;
+
+    cursor: not-allowed;
+
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1000px) {
+
+    .ordenes-estadisticas {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+
+    .orden-card-info {
+
+        grid-template-columns:
+            repeat(2, 1fr);
+
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .ordenes-header {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    .btn-nueva-orden {
+
+        width: 100%;
+
+    }
+
+
+    .ordenes-filtros {
+
+        flex-direction: column;
+
+    }
+
+
+    .ordenes-estadisticas {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+    .orden-card-header {
+
+        flex-direction: column;
+
+    }
+
+
+    .orden-card-info {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+    .orden-card-footer {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    .cambiar-estado select {
+
+        width: 100%;
+
+    }
+
+
+    .btn-ver-orden {
+
+        width: 100%;
+
+    }
+
+
+    .formulario-grid {
+
+        grid-template-columns: 1fr;
+
+        gap: 0;
+
+    }
+
+
+    .modal-overlay {
+
+        padding: 10px;
+
+        align-items: flex-start;
+
+    }
+
+
+    .modal-orden {
+
+        max-height: 95vh;
+
+        margin-top: 10px;
+
+    }
+
+}

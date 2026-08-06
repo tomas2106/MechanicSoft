@@ -1,294 +1,362 @@
-/* ==========================
-   CONTENEDOR
-========================== */
 
-.registro-container{
+/* ==========================================
+   CONTENEDOR PRINCIPAL
+========================================== */
 
-    color:white;
-
-    max-width:1400px;
-
-    margin:auto;
-
+.registro-container {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    color: #f8fafc;
 }
 
-.registro-container h1{
-
-    margin-bottom:30px;
-
-    font-size:32px;
-
-    font-weight:700;
-
+.registro-container h1 {
+    margin: 0 0 30px;
+    font-size: 30px;
+    font-weight: 700;
+    color: #f8fafc;
 }
 
-/* ==========================
+
+/* ==========================================
    GRID PRINCIPAL
-========================== */
+========================================== */
 
-.registro-grid{
-
-    display:grid;
-
-    grid-template-columns:2fr 1fr;
-
-    gap:20px;
-
-    align-items:start;
-
+.registro-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    align-items: start;
 }
 
-/* ==========================
+
+/* ==========================================
    TARJETAS
-========================== */
+========================================== */
 
-.card{
+.card {
+    background: #111827;
+    border: 1px solid #273449;
+    border-radius: 14px;
+    padding: 25px;
 
-    background:#1E293B;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.18);
 
-    border:1px solid #334155;
-
-    border-radius:14px;
-
-    padding:25px;
-
-    transition:.25s;
-
-    box-shadow:0 5px 15px rgba(0,0,0,.15);
-
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.card:hover{
-
-    border-color:#475569;
-
+.card:hover {
+    border-color: #3b82f6;
+    box-shadow: 0 8px 28px rgba(59, 130, 246, 0.08);
 }
 
-.grande{
-
-    min-height:320px;
-
+.grande {
+    min-height: 320px;
 }
 
-.card h2{
+.card h2 {
+    margin: 0 0 22px;
 
-    margin-bottom:22px;
+    color: #60a5fa;
 
-    color:#F97316;
-
-    font-size:22px;
-
+    font-size: 20px;
+    font-weight: 700;
 }
 
-/* ==========================
+
+/* ==========================================
    GRID DEL FORMULARIO
-========================== */
+========================================== */
 
-.grid-form{
-
-    display:grid;
-
-    grid-template-columns:repeat(2,1fr);
-
-    gap:20px;
-
+.grid-form {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
 }
 
-/* ==========================
+
+/* ==========================================
    CAMPOS
-========================== */
+========================================== */
 
-.campo{
-
-    display:flex;
-
-    flex-direction:column;
-
+.campo {
+    display: flex;
+    flex-direction: column;
 }
 
-.campo label{
+.campo label {
+    margin-bottom: 8px;
 
-    margin-bottom:8px;
+    color: #cbd5e1;
 
-    color:#CBD5E1;
-
-    font-size:14px;
-
-    font-weight:600;
-
+    font-size: 14px;
+    font-weight: 600;
 }
 
-/* ==========================
-   INPUTS
-========================== */
+
+/* ==========================================
+   INPUTS Y SELECT
+========================================== */
 
 .campo input,
-textarea{
+.campo select,
+.campo textarea {
+    width: 100%;
 
-    width:100%;
+    background: #0b1220;
 
-    background:#0F172A;
+    color: #f8fafc;
 
-    color:white;
+    border: 1px solid #334155;
 
-    border:1px solid #475569;
+    border-radius: 9px;
 
-    border-radius:10px;
+    padding: 13px 14px;
 
-    padding:14px;
+    font-family: inherit;
+    font-size: 14px;
 
-    font-size:15px;
+    outline: none;
 
-    transition:.25s;
-
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
 }
+
+
+/* ==========================================
+   PLACEHOLDER
+========================================== */
+
+.campo input::placeholder,
+.campo textarea::placeholder {
+    color: #64748b;
+}
+
+
+/* ==========================================
+   FOCUS
+========================================== */
 
 .campo input:focus,
-textarea:focus{
+.campo select:focus,
+.campo textarea:focus {
+    border-color: #3b82f6;
 
-    outline:none;
+    background: #0f172a;
 
-    border-color:#F97316;
-
-    box-shadow:0 0 0 3px rgba(249,115,22,.18);
-
+    box-shadow:
+        0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 
-textarea{
 
-    resize:vertical;
+/* ==========================================
+   SELECT
+========================================== */
 
-    min-height:180px;
-
+.campo select {
+    cursor: pointer;
 }
 
-/* ==========================
+.campo select:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+
+/* ==========================================
+   TEXTAREA
+========================================== */
+
+.campo textarea {
+    resize: vertical;
+    min-height: 180px;
+    line-height: 1.5;
+}
+
+
+/* ==========================================
+   MENSAJE SIN CLIENTES
+========================================== */
+
+.mensaje-sin-clientes {
+    margin-top: 15px;
+
+    padding: 12px 14px;
+
+    background: rgba(245, 158, 11, 0.08);
+
+    border: 1px solid rgba(245, 158, 11, 0.25);
+
+    border-radius: 8px;
+
+    color: #fbbf24;
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* ==========================================
    RESUMEN
-========================== */
+========================================== */
 
-.resumen{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:18px;
-
+.resumen {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
-.resumen p{
+.resumen p {
+    margin: 0;
 
-    color:#E2E8F0;
+    padding: 11px 12px;
 
-    font-size:15px;
+    background: #0b1220;
 
+    border: 1px solid #273449;
+
+    border-radius: 8px;
+
+    color: #cbd5e1;
+
+    font-size: 14px;
 }
 
-/* ==========================
-   BOTÓN
-========================== */
-
-.btn-registrar{
-
-    width:100%;
-
-    background:#F97316;
-
-    color:white;
-
-    border:none;
-
-    border-radius:10px;
-
-    padding:16px;
-
-    font-size:17px;
-
-    font-weight:600;
-
-    cursor:pointer;
-
-    transition:.25s;
-
+.resumen strong {
+    color: #f8fafc;
 }
 
-.btn-registrar:hover{
 
-    background:#EA580C;
+/* ==========================================
+   BOTÓN REGISTRAR
+========================================== */
 
-    transform:translateY(-2px);
+.btn-registrar {
+    width: 100%;
 
+    margin-top: 5px;
+
+    background: #2563eb;
+
+    color: white;
+
+    border: 1px solid #3b82f6;
+
+    border-radius: 9px;
+
+    padding: 14px 16px;
+
+    font-family: inherit;
+
+    font-size: 15px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.btn-registrar:active{
+.btn-registrar:hover {
+    background: #3b82f6;
 
-    transform:scale(.98);
+    transform: translateY(-1px);
 
+    box-shadow:
+        0 6px 18px rgba(37, 99, 235, 0.25);
 }
 
-/* ==========================
+.btn-registrar:active {
+    transform: translateY(0);
+}
+
+.btn-registrar:disabled {
+    background: #1e3a5f;
+
+    border-color: #274c77;
+
+    color: #94a3b8;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+/* ==========================================
    TABLET
-========================== */
+========================================== */
 
-@media(max-width:992px){
+@media (max-width: 992px) {
 
-    .registro-grid{
-
-        grid-template-columns:1fr;
-
+    .registro-grid {
+        grid-template-columns: 1fr;
     }
 
 }
 
-/* ==========================
+
+/* ==========================================
    CELULAR
-========================== */
+========================================== */
 
-@media(max-width:768px){
+@media (max-width: 768px) {
 
-    .registro-container h1{
-
-        font-size:24px;
-
-        text-align:center;
-
+    .registro-container h1 {
+        font-size: 24px;
+        margin-bottom: 22px;
     }
 
-    .grid-form{
-
-        grid-template-columns:1fr;
-
-        gap:16px;
-
+    .grid-form {
+        grid-template-columns: 1fr;
+        gap: 16px;
     }
 
-    .card{
-
-        padding:18px;
-
+    .card {
+        padding: 18px;
     }
 
-    .card h2{
-
-        font-size:19px;
-
+    .card h2 {
+        font-size: 18px;
     }
 
     .campo input,
-    textarea{
-
-        font-size:16px;
-
-        padding:15px;
-
+    .campo select,
+    .campo textarea {
+        font-size: 16px;
+        padding: 14px;
     }
 
-    .btn-registrar{
-
-        padding:18px;
-
-        font-size:18px;
-
+    .btn-registrar {
+        padding: 16px;
+        font-size: 16px;
     }
 
 }
+
+
+/* ==========================================
+   CELULAR PEQUEÑO
+========================================== */
+
+@media (max-width: 480px) {
+
+    .registro-container h1 {
+        font-size: 22px;
+    }
+
+    .card {
+        padding: 15px;
+        border-radius: 11px;
+    }
+
+}
+

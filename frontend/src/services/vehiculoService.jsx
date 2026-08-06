@@ -1,19 +1,96 @@
 import axios from "axios";
 
-const API = `${import.meta.env.VITE_API_URL}/api/vehiculos`;
+const API = "http://localhost:9769/api/vehiculos";
 
-export const obtenerVehiculos = () => {
+
+// ==========================================
+// OBTENER TODOS LOS VEHÍCULOS
+// ==========================================
+
+export const obtenerVehiculos = async () => {
+
     return axios.get(API);
+
 };
 
-export const guardarVehiculo = (vehiculo) => {
-    return axios.post(API, vehiculo);
+
+// ==========================================
+// OBTENER VEHÍCULO POR ID
+// ==========================================
+
+export const obtenerVehiculoPorId = async (id) => {
+
+    return axios.get(`${API}/${id}`);
+
 };
 
-export const eliminarVehiculo = (id) => {
-    return axios.delete(`${API}/${id}`);
+
+// ==========================================
+// BUSCAR VEHÍCULO POR PLACA
+// ==========================================
+
+export const obtenerVehiculoPorPlaca = async (placa) => {
+
+    return axios.get(
+        `${API}/placa/${placa.toUpperCase()}`
+    );
+
 };
 
-export const actualizarVehiculo = (id, vehiculo) => {
-    return axios.put(`${API}/${id}`, vehiculo);
+
+// ==========================================
+// OBTENER VEHÍCULOS DE UN CLIENTE
+// ==========================================
+
+export const obtenerVehiculosPorCliente = async (clienteId) => {
+
+    return axios.get(
+        `${API}/cliente/${clienteId}`
+    );
+
 };
+
+
+// ==========================================
+// REGISTRAR VEHÍCULO
+// ==========================================
+
+export const guardarVehiculo = async (vehiculo) => {
+
+    return axios.post(
+        API,
+        vehiculo
+    );
+
+};
+
+
+// ==========================================
+// ACTUALIZAR VEHÍCULO
+// ==========================================
+
+export const actualizarVehiculo = async (
+    id,
+    vehiculo
+) => {
+
+    return axios.put(
+        `${API}/${id}`,
+        vehiculo
+    );
+
+};
+
+
+// ==========================================
+// ELIMINAR VEHÍCULO
+// ==========================================
+
+export const eliminarVehiculo = async (id) => {
+
+    return axios.delete(
+        `${API}/${id}`
+    );
+
+};
+

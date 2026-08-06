@@ -1,20 +1,26 @@
-/* ==========================
+/* =========================================================
+   SIDEBAR — MECHANICSOFT
+   Diseño profesional / moderno
+========================================================= */
+
+
+/* =========================================================
    SIDEBAR ESCRITORIO
-========================== */
+========================================================= */
 
 .sidebar {
 
     width: 240px;
     min-height: 100vh;
 
-    background: #111827;
+    background: #0B1120;
 
-    border-right: 1px solid #1f2937;
+    border-right: 1px solid #1E293B;
 
     display: flex;
     flex-direction: column;
 
-    padding: 25px 18px;
+    padding: 24px 16px;
 
     box-sizing: border-box;
 
@@ -22,144 +28,243 @@
 
 }
 
-.sidebar-header{
 
-    margin-bottom:35px;
-    text-align:center;
+/* =========================================================
+   CABECERA
+========================================================= */
 
-}
+.sidebar-header {
 
-.sidebar-header h2{
+    margin-bottom: 32px;
 
-    color:white;
-    font-size:22px;
-    margin:0;
-    font-weight:700;
+    padding: 0 8px;
 
-}
-
-.sidebar nav{
-
-    display:flex;
-    flex-direction:column;
-    gap:15px;
+    text-align: left;
 
 }
 
-.sidebar button{
+.sidebar-header h2 {
 
-    width:100%;
+    margin: 0;
 
-    background:none;
+    color: #F8FAFC;
 
-    border:none;
+    font-size: 21px;
 
-    color:#E5E7EB;
+    font-weight: 700;
 
-    padding:15px;
-
-    text-align:left;
-
-    cursor:pointer;
-
-    border-radius:10px;
-
-    font-size:16px;
-
-    transition:.25s;
+    letter-spacing: -0.3px;
 
 }
 
-.sidebar button:hover{
 
-    background:#1E293B;
+/* =========================================================
+   NAVEGACIÓN
+========================================================= */
 
-    transform:translateX(4px);
+.sidebar nav {
 
-}
+    display: flex;
 
-.activo{
+    flex-direction: column;
 
-    background:#F97316 !important;
-
-    color:white !important;
-
-    font-weight:bold;
+    gap: 6px;
 
 }
 
-/* ==========================
+
+/* =========================================================
+   BOTONES
+========================================================= */
+
+.sidebar button {
+
+    position: relative;
+
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    background: transparent;
+
+    border: 1px solid transparent;
+
+    color: #94A3B8;
+
+    padding: 12px 13px;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    border-radius: 8px;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    font-weight: 500;
+
+    transition:
+        background .18s ease,
+        color .18s ease,
+        border-color .18s ease,
+        transform .18s ease;
+
+}
+
+
+/* =========================================================
+   HOVER
+========================================================= */
+
+.sidebar button:hover {
+
+    background: #151F30;
+
+    border-color: #1E293B;
+
+    color: #E2E8F0;
+
+    transform: translateX(2px);
+
+}
+
+
+/* =========================================================
+   ELEMENTO ACTIVO
+========================================================= */
+
+.sidebar .activo {
+
+    background: #172554 !important;
+
+    border: 1px solid #1E3A8A;
+
+    color: #60A5FA !important;
+
+    font-weight: 600;
+
+    box-shadow:
+        inset 3px 0 0 #3B82F6;
+
+}
+
+
+/* =========================================================
+   HOVER DEL ELEMENTO ACTIVO
+========================================================= */
+
+.sidebar .activo:hover {
+
+    background: #1E3A8A !important;
+
+    color: #93C5FD !important;
+
+}
+
+
+/* =========================================================
    BOTÓN HAMBURGUESA
-========================== */
+========================================================= */
 
-.menu-toggle{
+.menu-toggle {
 
-    display:none;
+    display: none;
 
-    position:fixed;
+    position: fixed;
 
-    top:15px;
-    left:15px;
+    top: 15px;
+    left: 15px;
 
-    z-index:2000;
+    z-index: 2000;
 
-    width:48px;
-    height:48px;
+    width: 44px;
+    height: 44px;
 
-    border:none;
+    display: flex;
 
-    border-radius:10px;
+    justify-content: center;
+    align-items: center;
 
-    background:#111827;
+    border: 1px solid #334155;
 
-    color:white;
+    border-radius: 9px;
 
-    font-size:24px;
+    background: #0B1120;
 
-    cursor:pointer;
+    color: #E2E8F0;
 
-    box-shadow:0 4px 12px rgba(0,0,0,.25);
+    font-size: 22px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 15px rgba(0, 0, 0, .25);
+
+    transition:
+        background .18s ease,
+        border-color .18s ease;
 
 }
 
-/* ==========================
+.menu-toggle:hover {
+
+    background: #151F30;
+
+    border-color: #475569;
+
+}
+
+
+/* =========================================================
    RESPONSIVE
-========================== */
+========================================================= */
 
-@media (max-width:768px){
+@media (max-width: 768px) {
 
-    .menu-toggle{
+    .menu-toggle {
 
-        display:flex;
+        display: flex;
 
-        justify-content:center;
-        align-items:center;
-
-    }
-
-    .sidebar{
-
-        position:fixed;
-
-        top:0;
-        left:-260px;
-
-        width:240px;
-
-        height:100vh;
-
-        z-index:1500;
-
-        transition:left .35s ease;
-
-        box-shadow:5px 0 18px rgba(0,0,0,.25);
+        justify-content: center;
+        align-items: center;
 
     }
 
-    .sidebar.abierto{
 
-        left:0;
+    .sidebar {
+
+        position: fixed;
+
+        top: 0;
+        left: -260px;
+
+        width: 240px;
+
+        height: 100vh;
+
+        min-height: 100vh;
+
+        z-index: 1500;
+
+        transition: left .35s ease;
+
+        box-shadow:
+            8px 0 25px rgba(0, 0, 0, .30);
+
+    }
+
+
+    .sidebar.abierto {
+
+        left: 0;
 
     }
 
 }
+

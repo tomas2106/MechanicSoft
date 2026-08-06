@@ -2,11 +2,8 @@ import { useState } from "react";
 import "./Sidebar.css";
 
 export default function Sidebar({
-
     paginaActual,
-
     cambiarPagina
-
 }) {
 
     const [menuAbierto, setMenuAbierto] = useState(false);
@@ -22,7 +19,7 @@ export default function Sidebar({
     return (
 
         <>
-            {/* Botón hamburguesa (solo aparecerá en celular mediante CSS) */}
+
             <button
                 className="menu-toggle"
                 onClick={() => setMenuAbierto(!menuAbierto)}
@@ -30,38 +27,90 @@ export default function Sidebar({
                 ☰
             </button>
 
-            <aside className={`sidebar ${menuAbierto ? "abierto" : ""}`}>
+            <aside
+                className={`sidebar ${
+                    menuAbierto ? "abierto" : ""
+                }`}
+            >
 
                 <div className="sidebar-header">
 
-                    <h2>🚗 MechanicSoft</h2>
+                    <h2>MechanicSoft</h2>
 
                 </div>
 
+
                 <nav>
 
+                    {/* INICIO */}
+
                     <button
-
-                        className={paginaActual === "registro" ? "activo" : ""}
-
-                        onClick={() => cambiarVista("registro")}
-
+                        className={
+                            paginaActual === "inicio"
+                                ? "activo"
+                                : ""
+                        }
+                        onClick={() => cambiarVista("inicio")}
                     >
-
-                        🚗 Registrar
-
+                         Inicio
                     </button>
 
+
+                    {/* CLIENTES */}
+
                     <button
-
-                        className={paginaActual === "lista" ? "activo" : ""}
-
-                        onClick={() => cambiarVista("lista")}
-
+                        className={
+                            paginaActual === "clientes"
+                                ? "activo"
+                                : ""
+                        }
+                        onClick={() => cambiarVista("clientes")}
                     >
+                         Clientes
+                    </button>
 
-                        📋 Vehículos
 
+                    {/* VEHÍCULOS */}
+
+                    <button
+                        className={
+                            paginaActual === "vehiculos"
+                                ? "activo"
+                                : ""
+                        }
+                        onClick={() => cambiarVista("vehiculos")}
+                    >
+                         Vehículos
+                    </button>
+
+
+                    {/* REGISTRAR VEHÍCULO */}
+
+                    <button
+                        className={
+                            paginaActual === "registroVehiculo"
+                                ? "activo"
+                                : ""
+                        }
+                        onClick={() =>
+                            cambiarVista("registroVehiculo")
+                        }
+                    >
+                         Registrar vehículo
+                    </button>
+
+
+                    {/* ÓRDENES */}
+
+                    <button
+                        className={
+                            paginaActual === "ordenes"
+                                ? "activo"
+                                : ""
+                        }
+                        onClick={() => cambiarVista("ordenes")}
+                    >
+                         Órdenes de servicio
                     </button>
 
                 </nav>

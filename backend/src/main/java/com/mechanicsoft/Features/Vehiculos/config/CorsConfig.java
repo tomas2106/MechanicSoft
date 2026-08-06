@@ -17,7 +17,11 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
 
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5173")
+                        .allowedOrigins(
+                                "https://mechanicsoft-test.vercel.app",
+                                "https://mechanicsoft-test-git-main-tomas210606.vercel.app",
+                                "https://mechanicsoft-test-q5iz7nj10-tomas210606.vercel.app"
+                        )
                         .allowedMethods(
                                 "GET",
                                 "POST",

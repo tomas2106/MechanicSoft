@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API = "http://localhost:9769/api/ordenes-servicio";
+const API = "https://mechanicsoft-test.onrender.com/api/ordenes-servicio";
 
 
 // ==========================================

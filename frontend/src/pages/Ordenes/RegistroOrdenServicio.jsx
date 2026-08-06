@@ -7,7 +7,7 @@ import {
 
 import "./RegistroOrdenServicio.css";
 
-const API_VEHICULOS = "http://localhost:9769/api/vehiculos";
+const API_VEHICULOS = "https://mechanicsoft-test.onrender.com/api/vehiculos";
 
 function RegistroOrdenServicio({ volver, ordenCreada }) {
 

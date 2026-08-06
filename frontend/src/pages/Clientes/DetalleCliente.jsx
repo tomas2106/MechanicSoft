@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "./DetalleCliente.css";
 
-const API_URL = "http://localhost:9769";
+const API_URL = "https://mechanicsoft-test.onrender.com";
 
 function DetalleCliente({ cliente, volver }) {
 

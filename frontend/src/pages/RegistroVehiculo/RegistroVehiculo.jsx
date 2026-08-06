@@ -3,7 +3,7 @@ import axios from "axios";
 import "./RegistroVehiculo.css";
 import { guardarVehiculo } from "../../services/vehiculoService";
 
-const API_CLIENTES = "http://localhost:9769/api/clientes";
+const API_CLIENTES = "https://mechanicsoft-test.onrender.com/api/clientes";
 
 const formularioInicial = {
     placa: "",

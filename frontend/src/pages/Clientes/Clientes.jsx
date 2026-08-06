@@ -16,7 +16,7 @@ import {
 import "./Clientes.css";
 import DetalleCliente from "./DetalleCliente";
 
-const API_URL = "http://localhost:9769/api/clientes";
+const API_URL = "https://mechanicsoft-test.onrender.com/api/clientes";
 
 function Clientes() {
 

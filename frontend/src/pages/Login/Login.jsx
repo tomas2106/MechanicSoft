@@ -23,25 +23,14 @@ export default function Login() {
     try {
       const res = await api.post("/auth/login", { email, password });
       iniciarSesion(res.data.usuario, res.data.token, res.data.taller);
-      navigate("/panel");
-    } catch (err) {
-      // Fallback temporal mientras conectamos /auth/login en Spring Boot
-      if (err.response?.status === 404 || !err.response) {
-        iniciarSesion(
-          { nombre: "Administrador", email },
-          "session-local-dev",
-          {
-            id: 1,
-            nombre: "Taller Principal",
-            slug: "taller-principal",
-            ubicacion: "Dirección pendiente de configurar",
-            whatsapp: "",
-          }
-        );
+
+      if (res.data.usuario.rol === "SUPER_ADMIN") {
+        navigate("/superadmin");
+      } else {
         navigate("/panel");
-        return;
       }
-      setError(err.message || "Credenciales incorrectas");
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Credenciales incorrectas");
     } finally {
       setCargando(false);
     }
@@ -65,7 +54,7 @@ export default function Login() {
             MS
           </div>
           <h1>MechanicSoft</h1>
-          <p>Ingresa con las credenciales de tu taller</p>
+          <p>Ingresa con tus credenciales asignadas</p>
         </div>
 
         {error && <div className="error-banner">{error}</div>}
@@ -76,7 +65,7 @@ export default function Login() {
             <input
               type="email"
               className="input-field"
-              placeholder="taller@correo.com"
+              placeholder="usuario@correo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

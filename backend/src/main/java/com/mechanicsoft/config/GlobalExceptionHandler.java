@@ -14,7 +14,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity> handleValidation(MethodArgumentNotValidException ex) {
+    public ResponseEntity<?> handleValidation(MethodArgumentNotValidException ex) {
         String mensaje = ex.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(err -> err.getDefaultMessage())
@@ -25,14 +25,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity> handleDuplicate(DataIntegrityViolationException ex) {
+    public ResponseEntity<?> handleDuplicate(DataIntegrityViolationException ex) {
         Map<String, String> body = new HashMap<>();
         body.put("message", "Ya existe un registro con ese teléfono o placa en el sistema.");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity> handleRuntime(RuntimeException ex) {
+    public ResponseEntity<?> handleRuntime(RuntimeException ex) {
         Map<String, String> body = new HashMap<>();
         body.put("message", ex.getMessage() != null ? ex.getMessage() : "Error procesando la solicitud");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);

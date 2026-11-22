@@ -4,6 +4,7 @@ import Layout from "./components/Layout/Layout";
 
 import PortalCliente from "./pages/Publico/PortalCliente";
 import Login from "./pages/Login/Login";
+import SuperAdmin from "./pages/SuperAdmin/SuperAdmin";
 import Tablero from "./pages/Tablero/Tablero";
 import Recepcion from "./pages/Recepcion/Recepcion";
 import Vehiculos from "./pages/Vehiculos/Vehiculos";
@@ -24,7 +25,17 @@ export default function App() {
         <Route path="/t/:slugTaller" element={<PortalCliente />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Rutas operativas del taller */}
+        {/* Consola Super Admin (Tú) */}
+        <Route
+          path="/superadmin"
+          element={
+            <RutaProtegida>
+              <SuperAdmin />
+            </RutaProtegida>
+          }
+        />
+
+        {/* Panel Operativo de cada Taller */}
         <Route
           path="/panel"
           element={

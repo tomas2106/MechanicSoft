@@ -1,9 +1,10 @@
 package com.mechanicsoft.Features.Talleres.controller;
 
-import com.mechanicsoft.Features.OrdenesServicio.entity.OrdenServicio;
 import com.mechanicsoft.Features.OrdenesServicio.repository.OrdenServicioRepository;
 import com.mechanicsoft.Features.Talleres.entity.Taller;
+import com.mechanicsoft.Features.Talleres.entity.UsuarioTaller;
 import com.mechanicsoft.Features.Talleres.repository.TallerRepository;
+import com.mechanicsoft.Features.Talleres.repository.UsuarioTallerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,39 +20,120 @@ import java.util.UUID;
 public class TallerController {
 
     private final TallerRepository tallerRepository;
+    private final UsuarioTallerRepository usuarioRepository;
     private final OrdenServicioRepository ordenRepository;
 
-    // Login de taller (y auto-registro inicial si es el primer acceso)
+    // Login unificado (Super Admin, Admin de Taller o Mecánico)
     @PostMapping("/auth/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credenciales) {
         String email = credenciales.get("email");
         String password = credenciales.get("password");
 
-        return tallerRepository.findByEmailAndActivoTrue(email)
-                .map(taller -> {
-                    if (!taller.getPassword().equals(password)) {
+        return usuarioRepository.findByEmailAndActivoTrue(email)
+                .map(usuario -> {
+                    if (!usuario.getPassword().equals(password)) {
                         return ResponseEntity.status(401).body(Map.of("message", "Contraseña incorrecta"));
                     }
+                    if (usuario.getTaller() != null && !Boolean.TRUE.equals(usuario.getTaller().getActivo())) {
+                        return ResponseEntity.status(403).body(Map.of("message", "Este taller se encuentra suspendido. Contacta a soporte."));
+                    }
+
                     Map<String, Object> resp = new HashMap<>();
                     resp.put("token", UUID.randomUUID().toString());
-                    resp.put("usuario", Map.of("nombre", taller.getNombre(), "email", taller.getEmail()));
-                    resp.put("taller", taller);
+                    resp.put("usuario", Map.of(
+                            "id", usuario.getId(),
+                            "nombre", usuario.getNombre(),
+                            "email", usuario.getEmail(),
+                            "rol", usuario.getRol(),
+                            "esMecanico", usuario.getEsMecanico()
+                    ));
+                    resp.put("taller", usuario.getTaller());
                     return ResponseEntity.ok(resp);
                 })
-                .orElseGet(() -> ResponseEntity.status(404).body(Map.of("message", "Taller no encontrado")));
+                .orElseGet(() -> ResponseEntity.status(404).body(Map.of("message", "Usuario no encontrado")));
     }
 
-    // Registrar nuevo taller (SaaS Multi-taller)
-    @PostMapping("/public/talleres/registro")
-    public ResponseEntity<Taller> registrarTaller(@RequestBody Taller taller) {
-        if (taller.getSlug() == null || taller.getSlug().isBlank()) {
-            taller.setSlug(taller.getNombre().toLowerCase().replaceAll("[^a-z0-9]+", "-"));
-        }
-        return ResponseEntity.ok(tallerRepository.save(taller));
+    // --- ENDPOINTS EXCLUSIVOS SUPER ADMIN ---
+    @GetMapping("/superadmin/talleres")
+    public List<Taller> listarTodosTalleres() {
+        return tallerRepository.findAll();
     }
 
+    @PostMapping("/superadmin/talleres")
+    public ResponseEntity<?> crearTallerYDueño(@RequestBody Map<String, Object> payload) {
+        String nombreTaller = (String) payload.get("nombreTaller");
+        String nombreAdmin = (String) payload.get("nombreAdmin");
+        String email = (String) payload.get("email");
+        String password = (String) payload.get("password");
+        String ubicacion = (String) payload.getOrDefault("ubicacion", "");
+        String whatsapp = (String) payload.getOrDefault("whatsapp", "");
+        boolean esMecanico = Boolean.TRUE.equals(payload.get("esMecanico"));
+
+        String slug = nombreTaller.toLowerCase().trim()
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+
+        Taller taller = new Taller();
+        taller.setNombre(nombreTaller);
+        taller.setSlug(slug);
+        taller.setEmail(email);
+        taller.setPassword(password);
+        taller.setUbicacion(ubicacion);
+        taller.setWhatsapp(whatsapp);
+        taller.setActivo(true);
+        Taller tallerGuardado = tallerRepository.save(taller);
+
+        UsuarioTaller admin = new UsuarioTaller();
+        admin.setNombre(nombreAdmin);
+        admin.setEmail(email);
+        admin.setPassword(password);
+        admin.setRol("ADMIN_TALLER");
+        admin.setEsMecanico(esMecanico);
+        admin.setTaller(tallerGuardado);
+        admin.setActivo(true);
+        usuarioRepository.save(admin);
+
+        return ResponseEntity.ok(tallerGuardado);
+    }
+
+    @PatchMapping("/superadmin/talleres/{id}/estado")
+    public ResponseEntity<Taller> alternarEstadoTaller(@PathVariable Long id) {
+        return tallerRepository.findById(id).map(t -> {
+            t.setActivo(!Boolean.TRUE.equals(t.getActivo()));
+            return ResponseEntity.ok(tallerRepository.save(t));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // --- GESTIÓN DE TRABAJADORES DENTRO DE UN TALLER ---
+    @GetMapping("/talleres/{tallerId}/equipo")
+    public List<UsuarioTaller> listarEquipo(@PathVariable Long tallerId) {
+        return usuarioRepository.findByTallerIdAndActivoTrue(tallerId);
+    }
+
+    @PostMapping("/talleres/{tallerId}/equipo")
+    public ResponseEntity<?> crearTrabajador(
+            @PathVariable Long tallerId,
+            @RequestBody UsuarioTaller nuevo) {
+        return tallerRepository.findById(tallerId).map(taller -> {
+            nuevo.setTaller(taller);
+            nuevo.setActivo(true);
+            if (nuevo.getRol() == null) nuevo.setRol("MECANICO");
+            return ResponseEntity.ok((Object) usuarioRepository.save(nuevo));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/talleres/equipo/{usuarioId}")
+    public ResponseEntity<?> desactivarTrabajador(@PathVariable Long usuarioId) {
+        return usuarioRepository.findById(usuarioId).map(u -> {
+            u.setActivo(false);
+            usuarioRepository.save(u);
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // --- ENDPOINTS PÚBLICOS Y PERFIL DEL TALLER ---
     @GetMapping("/public/talleres")
-    public List<Taller> listarTalleres() {
+    public List<Taller> listarTalleresPublicos() {
         return tallerRepository.findByActivoTrue();
     }
 
@@ -74,7 +156,6 @@ public class TallerController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // Consulta pública para el cliente por WhatsApp o Placa
     @GetMapping("/public/consulta")
     public ResponseEntity<?> consultarMoto(
             @RequestParam(defaultValue = "general") String taller,
@@ -88,7 +169,7 @@ public class TallerController {
                     String tel = o.getVehiculo().getCliente().getTelefono();
                     return placa.equals(query) || tel.contains(q.trim());
                 })
-                .reduce((first, second) -> second) // Toma la orden más reciente
+                .reduce((first, second) -> second)
                 .map(orden -> {
                     Map<String, Object> dto = new HashMap<>();
                     dto.put("id", orden.getId());

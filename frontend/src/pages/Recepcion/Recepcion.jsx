@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, CheckCircle2 } from "lucide-react";
-import { clienteService } from "../../services/clienteService";
-import { vehiculoService } from "../../services/vehiculoService";
+import api from "../../services/api";
 import { ordenService } from "../../services/ordenService";
 import { compressImage } from "../../utils/imageCompressor";
 import "./Recepcion.css";
@@ -17,15 +16,15 @@ export default function Recepcion() {
   const [form, setForm] = useState({
     clienteNombre: "",
     clienteTelefono: "",
-    clienteEmail: "",
+    clienteCorreo: "",
     placa: "",
     marca: "",
     modelo: "",
-    cilindraje: "",
-    kilometraje: "",
+    cilindrajeCc: "150",
+    kilometraje: "0",
     motivoIngreso: "",
     valorTotal: "",
-    fotoBase64: "",
+    fotoVehiculo: "",
   });
 
   const handleChange = (e) => {
@@ -49,7 +48,7 @@ export default function Recepcion() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreviewFoto(reader.result);
-        setForm((prev) => ({ ...prev, fotoBase64: reader.result }));
+        setForm((prev) => ({ ...prev, fotoVehiculo: reader.result }));
       };
       reader.readAsDataURL(comprimida);
     } catch (err) {
@@ -63,29 +62,46 @@ export default function Recepcion() {
     setError("");
 
     try {
-      const resCliente = await clienteService.crear({
-        nombre: form.clienteNombre,
-        telefono: form.clienteTelefono,
-        email: form.clienteEmail || null,
-        activo: true,
-      });
-      const clienteId = resCliente.data.id;
+      // 1. Buscar cliente existente por teléfono o crear uno nuevo
+      let clienteId;
+      try {
+        const resExistente = await api.get(`/clientes/telefono/${form.clienteTelefono.trim()}`);
+        clienteId = resExistente.data.id;
+      } catch {
+        const resCliente = await api.post("/clientes", {
+          nombre: form.clienteNombre.trim(),
+          telefono: form.clienteTelefono.trim(),
+          correo: form.clienteCorreo.trim() || null,
+          activo: true,
+        });
+        clienteId = resCliente.data.id;
+      }
 
-      const resVehiculo = await vehiculoService.crear({
-        clienteId,
-        placa: form.placa,
-        marca: form.marca,
-        modelo: form.modelo,
-        cilindraje: form.cilindraje ? Number(form.cilindraje) : null,
-        kilometraje: form.kilometraje ? Number(form.kilometraje) : null,
-        fotoUrl: form.fotoBase64 || null,
-        activo: true,
-      });
-      const vehiculoId = resVehiculo.data.id;
+      // 2. Buscar moto existente por placa o registrar una nueva
+      let vehiculoId;
+      const kmActual = Number(form.kilometraje) || 0;
+      try {
+        const resMotoExistente = await api.get(`/vehiculos/placa/${form.placa.trim()}`);
+        vehiculoId = resMotoExistente.data.id;
+      } catch {
+        const resVehiculo = await api.post("/vehiculos", {
+          clienteId,
+          placa: form.placa.trim(),
+          marca: form.marca.trim(),
+          modelo: form.modelo.trim(),
+          cilindrajeCc: Number(form.cilindrajeCc) || 150,
+          kilometraje: kmActual,
+          fotoVehiculo: form.fotoVehiculo || null,
+          activo: true,
+        });
+        vehiculoId = resVehiculo.data.id;
+      }
 
+      // 3. Crear la orden de servicio vinculada al vehículo
       await ordenService.crear({
         vehiculoId,
-        motivoIngreso: form.motivoIngreso,
+        kilometrajeIngreso: kmActual,
+        motivoIngreso: form.motivoIngreso.trim(),
         valorTotal: form.valorTotal ? Number(form.valorTotal) : 0,
         estado: "RECIBIDO",
       });
@@ -103,7 +119,7 @@ export default function Recepcion() {
       <div>
         <h2 style={{ fontSize: "1.2rem", fontWeight: 700 }}>Recepción de Motocicleta</h2>
         <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem" }}>
-          Registra el cliente, la moto y la orden de trabajo en un solo paso
+          Si el cliente o la placa ya existen, se vinculan automáticamente a la nueva orden
         </p>
       </div>
 
@@ -175,14 +191,29 @@ export default function Recepcion() {
             />
           </div>
           <div className="form-group">
-            <label>Kilometraje actual</label>
+            <label>Cilindraje (cc) *</label>
+            <input
+              name="cilindrajeCc"
+              type="number"
+              min="50"
+              className="input-field"
+              placeholder="Ej: 200"
+              value={form.cilindrajeCc}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Kilometraje actual *</label>
             <input
               name="kilometraje"
               type="number"
+              min="0"
               className="input-field"
               placeholder="Ej: 18500"
               value={form.kilometraje}
               onChange={handleChange}
+              required
             />
           </div>
         </div>
@@ -194,7 +225,7 @@ export default function Recepcion() {
             <input type="file" accept="image/*" onChange={handleFoto} hidden />
           </label>
           {infoCompresion && (
-            <span style={{ fontSize: "0.78rem", color: "#059669" }}>{infoCompresion}</span>
+            <span style={{ fontSize: "0.78rem", color: "#166534" }}>{infoCompresion}</span>
           )}
           {previewFoto && <img src={previewFoto} alt="Vista previa" className="foto-preview" />}
         </div>

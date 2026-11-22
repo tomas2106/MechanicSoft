@@ -42,8 +42,8 @@ public class Vehiculo {
 
     @NotNull(message = "El cilindraje es obligatorio")
     @Min(value = 50, message = "El cilindraje debe ser mayor a 50 cc")
-    @Column(name = "cilindraje_cc", nullable = false)
-    private Integer cilindrajeCc;
+    @Column(name = "cilindraje_cc")
+    private Integer cilindrajeCc = 150;
 
     @Column(length = 50)
     private String color;
@@ -53,7 +53,7 @@ public class Vehiculo {
     @Column(nullable = false)
     private Integer kilometraje;
 
-    @Column(name = "foto_vehiculo")
+    @Column(name = "foto_vehiculo", columnDefinition = "TEXT")
     private String fotoVehiculo;
 
     @Column(length = 500)

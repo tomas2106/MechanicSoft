@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Wrench, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sun, Moon } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import api from "../../services/api";
 import "./Login.css";
 
@@ -11,6 +12,7 @@ export default function Login() {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const { iniciarSesion } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -23,8 +25,8 @@ export default function Login() {
       iniciarSesion(res.data.usuario, res.data.token, res.data.taller);
       navigate("/panel");
     } catch (err) {
-      // Fallback temporal mientras conectamos el endpoint /auth/login en el backend
-      if (err.response?.status === 404) {
+      // Fallback temporal mientras conectamos /auth/login en Spring Boot
+      if (err.response?.status === 404 || !err.response) {
         iniciarSesion(
           { nombre: "Administrador", email },
           "session-local-dev",
@@ -47,22 +49,20 @@ export default function Login() {
 
   return (
     <div className="login-container">
+      <div style={{ position: "fixed", top: "1rem", right: "1rem" }}>
+        <button
+          onClick={toggleTheme}
+          className="icon-btn"
+          title={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+        >
+          {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+        </button>
+      </div>
+
       <div className="card login-card">
         <div className="login-header">
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 12,
-              background: "var(--primary-soft)",
-              color: "var(--primary)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              marginBottom: "0.75rem",
-            }}
-          >
-            <Wrench size={22} />
+          <div className="brand-monogram" style={{ marginBottom: "0.75rem" }}>
+            MS
           </div>
           <h1>MechanicSoft</h1>
           <p>Ingresa con las credenciales de tu taller</p>
@@ -95,7 +95,12 @@ export default function Login() {
             />
           </div>
 
-          <button type="submit" className="btn-primary" style={{ width: "100%" }} disabled={cargando}>
+          <button
+            type="submit"
+            className="btn-primary"
+            style={{ width: "100%" }}
+            disabled={cargando}
+          >
             {cargando ? "Ingresando..." : "Iniciar sesión"}
           </button>
         </form>

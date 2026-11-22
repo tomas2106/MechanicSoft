@@ -1,65 +1,55 @@
-.login-container {
+.login-split-page {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
   background-color: var(--bg-app);
 }
 
-.login-card {
+.login-visual-side {
+  background-image: linear-gradient(
+      to bottom,
+      rgba(9, 9, 11, 0.82) 0%,
+      rgba(15, 118, 110, 0.72) 100%
+    ),
+    url("../../assets/taller-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  color: #ffffff;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.login-form-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1.5rem;
+  position: relative;
+}
+
+.login-box {
   width: 100%;
   max-width: 400px;
 }
 
-.login-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.login-header h1 {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin-bottom: 0.35rem;
-}
-
-.login-header p {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-.form-group {
+.login-top-controls {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  right: 1.25rem;
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.form-group label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.input-field {
-  width: 100%;
-  padding: 0.65rem 0.85rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-app);
-  color: var(--text-primary);
-  outline: none;
-}
-
-.input-field:focus {
-  border-color: var(--primary);
-}
-
-.error-banner {
-  background-color: rgba(220, 38, 38, 0.1);
-  color: var(--danger);
-  padding: 0.65rem 0.85rem;
-  border-radius: var(--radius-md);
-  font-size: 0.85rem;
-  margin-bottom: 1rem;
+@media (max-width: 860px) {
+  .login-split-page {
+    grid-template-columns: 1fr;
+  }
+  .login-visual-side {
+    display: none;
+  }
 }

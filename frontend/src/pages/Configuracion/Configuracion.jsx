@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Copy, Check, Camera, Save, UserPlus, Trash2 } from "lucide-react";
+import { Copy, Check, Camera, Save, UserPlus, Trash2, ShieldAlert } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { compressImage } from "../../utils/imageCompressor";
 import api from "../../services/api";
 
 export default function Configuracion() {
   const { user, taller, actualizarTaller } = useAuth();
+  const esAdmin = user?.rol === "ADMIN_TALLER" || user?.rol === "SUPER_ADMIN";
+
   const [nombre, setNombre] = useState(taller?.nombre || "");
   const [ubicacion, setUbicacion] = useState(taller?.ubicacion || "");
   const [whatsapp, setWhatsapp] = useState(taller?.whatsapp || "");
@@ -13,7 +15,6 @@ export default function Configuracion() {
   const [copiado, setCopiado] = useState(false);
   const [guardado, setGuardado] = useState(false);
 
-  // Equipo de trabajo del taller
   const [equipo, setEquipo] = useState([]);
   const [nuevoMiembro, setNuevoMiembro] = useState({
     nombre: "",
@@ -23,7 +24,7 @@ export default function Configuracion() {
   });
 
   const cargarEquipo = async () => {
-    if (!taller?.id) return;
+    if (!taller?.id || !esAdmin) return;
     try {
       const res = await api.get(`/talleres/${taller.id}/equipo`);
       setEquipo(Array.isArray(res.data) ? res.data : []);
@@ -32,7 +33,7 @@ export default function Configuracion() {
 
   useEffect(() => {
     cargarEquipo();
-  }, [taller?.id]);
+  }, [taller?.id, esAdmin]);
 
   const slug =
     nombre
@@ -44,6 +45,7 @@ export default function Configuracion() {
   const enlacePublico = `${window.location.origin}/t/${slug}`;
 
   const handleLogo = async (e) => {
+    if (!esAdmin) return;
     const file = e.target.files?.[0];
     if (!file) return;
     const comprimida = await compressImage(file, { maxWidth: 400, quality: 0.8 });
@@ -54,6 +56,7 @@ export default function Configuracion() {
 
   const handleGuardar = async (e) => {
     e.preventDefault();
+    if (!esAdmin) return;
     try {
       if (taller?.id) {
         await api.put(`/talleres/${taller.id}`, {
@@ -74,6 +77,7 @@ export default function Configuracion() {
 
   const agregarTrabajador = async (e) => {
     e.preventDefault();
+    if (!esAdmin) return;
     try {
       await api.post(`/talleres/${taller.id}/equipo`, {
         ...nuevoMiembro,
@@ -87,6 +91,7 @@ export default function Configuracion() {
   };
 
   const quitarTrabajador = async (id) => {
+    if (!esAdmin) return;
     await api.delete(`/talleres/equipo/${id}`);
     cargarEquipo();
   };
@@ -100,15 +105,35 @@ export default function Configuracion() {
   return (
     <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
       <div>
-        <h2 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Configuración del Taller</h2>
+        <h2 style={{ fontSize: "1.25rem", fontWeight: 800 }}>Configuración del Taller</h2>
         <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem" }}>
           Identidad comercial, enlace para clientes y equipo de trabajo
         </p>
       </div>
 
+      {!esAdmin && (
+        <div
+          className="card"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.65rem",
+            backgroundColor: "var(--bg-subtle)",
+            fontSize: "0.86rem",
+            color: "var(--text-secondary)",
+          }}
+        >
+          <ShieldAlert size={18} color="var(--accent-brand)" />
+          <span>
+            Estás conectado con perfil de <strong>Mecánico</strong>. Solo el administrador puede
+            modificar el nombre, logo o equipo del taller.
+          </span>
+        </div>
+      )}
+
       <div className="card">
         <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-secondary)" }}>
-          Enlace directo para tus clientes
+          Enlace directo para compartir con tus clientes
         </label>
         <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.45rem" }}>
           <input className="input-field" value={enlacePublico} readOnly />
@@ -120,57 +145,80 @@ export default function Configuracion() {
       </div>
 
       <form onSubmit={handleGuardar} className="card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-        <h3 className="section-title">Perfil Público</h3>
+        <h3 className="section-title">Perfil Público del Taller</h3>
+
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
           {logoUrl ? (
-            <img src={logoUrl} alt="Logo" style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover" }} />
+            <img
+              src={logoUrl}
+              alt="Logo"
+              style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover", border: "1px solid var(--border-color)" }}
+            />
           ) : (
             <div className="taller-logo-lg" style={{ backgroundColor: "var(--accent-brand)" }}>
               {(nombre || "M").charAt(0).toUpperCase()}
             </div>
           )}
-          <label className="btn-secondary">
-            <Camera size={16} /> Cambiar logo
-            <input type="file" accept="image/*" onChange={handleLogo} hidden />
-          </label>
+
+          {esAdmin && (
+            <label className="btn-secondary">
+              <Camera size={16} /> Cambiar logo
+              <input type="file" accept="image/*" onChange={handleLogo} hidden />
+            </label>
+          )}
         </div>
 
         <div className="form-group">
           <label>Nombre comercial del taller</label>
-          <input className="input-field" value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+          <input
+            className="input-field"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            disabled={!esAdmin}
+            required
+          />
         </div>
 
         <div className="form-grid-2">
           <div className="form-group">
             <label>WhatsApp del taller (ej: 573001234567)</label>
-            <input className="input-field" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} />
+            <input
+              className="input-field"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              disabled={!esAdmin}
+            />
           </div>
 
           <div className="form-group">
-            <label>Dirección o Google Maps</label>
+            <label>Dirección o ubicación</label>
             <input
               className="input-field"
               placeholder="Ej: Cra 10 # 25-30, Soacha"
               value={ubicacion}
               onChange={(e) => setUbicacion(e.target.value)}
+              disabled={!esAdmin}
             />
           </div>
         </div>
 
-        <button type="submit" className="btn-primary">
-          <Save size={17} /> {guardado ? "¡Cambios guardados!" : "Guardar perfil del taller"}
-        </button>
+        {esAdmin && (
+          <button type="submit" className="btn-primary">
+            <Save size={17} /> {guardado ? "¡Cambios guardados!" : "Guardar perfil del taller"}
+          </button>
+        )}
       </form>
 
-      {/* Sección Equipo de Trabajo (Solo visible para el Dueño / Admin del Taller) */}
-      {user?.rol !== "MECANICO" && (
+      {/* Sección Equipo de Trabajo (Exclusiva para el Dueño / Admin del Taller) */}
+      {esAdmin && (
         <div className="card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
             <h3 className="section-title" style={{ marginBottom: "0.25rem" }}>
               Equipo y Mecánicos del Taller
             </h3>
             <p style={{ fontSize: "0.84rem", color: "var(--text-secondary)" }}>
-              Crea accesos para tus mecánicos o administradores. Tú ya tienes permisos para operar motos.
+              Crea accesos para tus mecánicos o administradores. Como administrador también puedes
+              operar motos en el tablero.
             </p>
           </div>
 
@@ -214,7 +262,15 @@ export default function Configuracion() {
           </form>
 
           {equipo.length > 0 && (
-            <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "0.75rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <div
+              style={{
+                borderTop: "1px solid var(--border-color)",
+                paddingTop: "0.75rem",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.5rem",
+              }}
+            >
               {equipo.map((m) => (
                 <div
                   key={m.id}
@@ -234,7 +290,12 @@ export default function Configuracion() {
                     </span>
                   </div>
                   {m.id !== user?.id && (
-                    <button onClick={() => quitarTrabajador(m.id)} className="icon-btn" style={{ color: "var(--danger)" }}>
+                    <button
+                      onClick={() => quitarTrabajador(m.id)}
+                      className="icon-btn"
+                      style={{ color: "var(--danger)" }}
+                      title="Quitar acceso"
+                    >
                       <Trash2 size={15} />
                     </button>
                   )}

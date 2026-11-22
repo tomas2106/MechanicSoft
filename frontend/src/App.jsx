@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout/Layout";
 
+import HomePage from "./pages/Publico/HomePage";
 import PortalCliente from "./pages/Publico/PortalCliente";
 import Login from "./pages/Login/Login";
 import SuperAdmin from "./pages/SuperAdmin/SuperAdmin";
@@ -20,8 +21,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rutas públicas para clientes */}
-        <Route path="/" element={<PortalCliente />} />
+        {/* Home Comercial y Portales Públicos */}
+        <Route path="/" element={<HomePage />} />
         <Route path="/t/:slugTaller" element={<PortalCliente />} />
         <Route path="/login" element={<Login />} />
 

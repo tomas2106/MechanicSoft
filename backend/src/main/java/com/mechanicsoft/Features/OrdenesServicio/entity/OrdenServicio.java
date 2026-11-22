@@ -70,6 +70,12 @@ public class OrdenServicio {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "dias_garantia")
+    private Integer diasGarantia = 30;
+
+    @Column(name = "proximo_servicio_dias")
+    private Integer proximoServicioDias = 45;
+
     @PrePersist
     public void prePersist() {
 

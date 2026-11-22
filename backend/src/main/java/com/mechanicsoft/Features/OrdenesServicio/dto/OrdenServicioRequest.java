@@ -20,7 +20,7 @@ public class OrdenServicioRequest {
     @NotNull(message = "El vehículo es obligatorio")
     private Long vehiculoId;
 
-    @NotNull(message = "El kilometraje de ingreso es obligatorio")
+    @NotNull(message = "El kilometraje es obligatorio")
     @Min(value = 0, message = "El kilometraje no puede ser negativo")
     private Integer kilometrajeIngreso;
 
@@ -36,4 +36,8 @@ public class OrdenServicioRequest {
     private EstadoOrden estado;
 
     private BigDecimal valorTotal;
+
+    private Integer diasGarantia;
+
+    private Integer proximoServicioDias;
 }

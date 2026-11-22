@@ -34,6 +34,13 @@ public class OrdenServicioServiceImpl implements OrdenServicioService {
                 .orElseThrow(() ->
                         new RuntimeException("Vehículo no encontrado."));
 
+        // Actualizar kilometraje del vehículo si el de ingreso es mayor
+        if (request.getKilometrajeIngreso() != null &&
+                (vehiculo.getKilometraje() == null || request.getKilometrajeIngreso() > vehiculo.getKilometraje())) {
+            vehiculo.setKilometraje(request.getKilometrajeIngreso());
+            vehiculoRepository.save(vehiculo);
+        }
+
         OrdenServicio orden = new OrdenServicio();
 
         orden.setVehiculo(vehiculo);
@@ -44,6 +51,8 @@ public class OrdenServicioServiceImpl implements OrdenServicioService {
         orden.setObservaciones(request.getObservaciones());
         orden.setEstado(request.getEstado());
         orden.setValorTotal(request.getValorTotal());
+        orden.setDiasGarantia(request.getDiasGarantia() != null ? request.getDiasGarantia() : 30);
+        orden.setProximoServicioDias(request.getProximoServicioDias() != null ? request.getProximoServicioDias() : 45);
 
         return repository.save(orden);
     }
@@ -60,13 +69,11 @@ public class OrdenServicioServiceImpl implements OrdenServicioService {
 
     @Override
     public List<OrdenServicio> buscarPorVehiculo(Long vehiculoId) {
-
         return repository.findByVehiculoIdAndActivoTrue(vehiculoId);
     }
 
     @Override
     public List<OrdenServicio> buscarPorEstado(EstadoOrden estado) {
-
         return repository.findByEstado(estado);
     }
 
@@ -89,8 +96,17 @@ public class OrdenServicioServiceImpl implements OrdenServicioService {
         existente.setObservaciones(request.getObservaciones());
         existente.setValorTotal(request.getValorTotal());
 
+        if (request.getDiasGarantia() != null) {
+            existente.setDiasGarantia(request.getDiasGarantia());
+        }
+        if (request.getProximoServicioDias() != null) {
+            existente.setProximoServicioDias(request.getProximoServicioDias());
+        }
         if (request.getEstado() != null) {
             existente.setEstado(request.getEstado());
+            if (request.getEstado() == EstadoOrden.ENTREGADO && existente.getFechaEntrega() == null) {
+                existente.setFechaEntrega(LocalDateTime.now());
+            }
         }
 
         return repository.save(existente);

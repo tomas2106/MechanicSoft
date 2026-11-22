@@ -7,6 +7,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
@@ -18,18 +19,22 @@ public class GlobalExceptionHandler {
                 .findFirst()
                 .map(err -> err.getDefaultMessage())
                 .orElse("Datos inválidos en la solicitud");
-        return ResponseEntity.badRequest().body(Map.of("message", mensaje));
+        Map<String, String> body = new HashMap<>();
+        body.put("message", mensaje);
+        return ResponseEntity.badRequest().body(body);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity> handleDuplicate(DataIntegrityViolationException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("message", "Ya existe un registro con ese teléfono o placa en el sistema."));
+        Map<String, String> body = new HashMap<>();
+        body.put("message", "Ya existe un registro con ese teléfono o placa en el sistema.");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity> handleRuntime(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", ex.getMessage() != null ? ex.getMessage() : "Error procesando la solicitud"));
+        Map<String, String> body = new HashMap<>();
+        body.put("message", ex.getMessage() != null ? ex.getMessage() : "Error procesando la solicitud");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 }

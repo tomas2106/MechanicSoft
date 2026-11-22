@@ -94,10 +94,14 @@ public class TallerController {
                     dto.put("id", orden.getId());
                     dto.put("estado", orden.getEstado());
                     dto.put("motivoIngreso", orden.getMotivoIngreso());
+                    dto.put("diagnostico", orden.getDiagnostico());
+                    dto.put("trabajoRealizado", orden.getTrabajoRealizado());
                     dto.put("valorTotal", orden.getValorTotal());
+                    dto.put("fechaIngreso", orden.getFechaIngreso());
                     dto.put("placa", orden.getVehiculo().getPlaca());
                     dto.put("marca", orden.getVehiculo().getMarca());
                     dto.put("modelo", orden.getVehiculo().getModelo());
+                    dto.put("fotoVehiculo", orden.getVehiculo().getFotoVehiculo());
                     return ResponseEntity.ok((Object) dto);
                 })
                 .orElse(ResponseEntity.notFound().build());

@@ -1,0 +1,58 @@
+.portal-container {
+  min-height: 100vh;
+  background-color: var(--bg-app);
+  display: flex;
+  flex-direction: column;
+}
+
+.portal-navbar {
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.9rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.portal-main {
+  max-width: 580px;
+  width: 100%;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  flex: 1;
+}
+
+.taller-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.taller-logo-lg {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background-color: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  object-fit: cover;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-RECIBIDO { background: var(--status-recibido-bg); color: var(--status-recibido-text); }
+.status-DIAGNOSTICO { background: var(--status-diagnostico-bg); color: var(--status-diagnostico-text); }
+.status-EN_REPARACION { background: var(--status-reparacion-bg); color: var(--status-reparacion-text); }
+.status-LISTO_PARA_ENTREGA { background: var(--status-listo-bg); color: var(--status-listo-text); }
+.status-ENTREGADO { background: var(--status-entregado-bg); color: var(--status-entregado-text); }

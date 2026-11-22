@@ -163,15 +163,31 @@ public class TallerController {
             @RequestParam(defaultValue = "general") String taller,
             @RequestParam String q) {
 
+        if (q == null || q.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Ingresa una placa o teléfono"));
+        }
+
         String query = q.trim().toUpperCase();
+        String telQuery = q.trim().replaceAll("\\D+", "");
+
         List<OrdenServicio> coincidencias = ordenRepository.findAll().stream()
-                .filter(o -> Boolean.TRUE.equals(o.getActivo()))
+                .filter(o -> o != null && !Boolean.FALSE.equals(o.getActivo()))
+                .filter(o -> o.getVehiculo() != null)
                 .filter(o -> {
-                    String placa = o.getVehiculo().getPlaca().toUpperCase();
-                    String tel = o.getVehiculo().getCliente().getTelefono();
-                    return placa.equals(query) || tel.contains(q.trim());
+                    String placa = o.getVehiculo().getPlaca() != null
+                            ? o.getVehiculo().getPlaca().replaceAll("\\s+", "").toUpperCase()
+                            : "";
+                    String tel = (o.getVehiculo().getCliente() != null && o.getVehiculo().getCliente().getTelefono() != null)
+                            ? o.getVehiculo().getCliente().getTelefono().replaceAll("\\D+", "")
+                            : "";
+                    boolean matchPlaca = !placa.isEmpty() && placa.equals(query.replaceAll("\\s+", ""));
+                    boolean matchTel = !telQuery.isEmpty() && !tel.isEmpty() && tel.contains(telQuery);
+                    return matchPlaca || matchTel;
                 })
-                .sorted((a, b) -> Long.compare(b.getId(), a.getId()))
+                .sorted((a, b) -> Long.compare(
+                        b.getId() != null ? b.getId() : 0L,
+                        a.getId() != null ? a.getId() : 0L
+                ))
                 .toList();
 
         if (coincidencias.isEmpty()) {
@@ -181,7 +197,7 @@ public class TallerController {
         OrdenServicio actual = coincidencias.get(0);
         Map<String, Object> dto = new HashMap<>();
         dto.put("id", actual.getId());
-        dto.put("estado", actual.getEstado());
+        dto.put("estado", actual.getEstado() != null ? actual.getEstado().name() : "RECIBIDO");
         dto.put("motivoIngreso", actual.getMotivoIngreso());
         dto.put("diagnostico", actual.getDiagnostico());
         dto.put("trabajoRealizado", actual.getTrabajoRealizado());
@@ -194,7 +210,7 @@ public class TallerController {
         dto.put("modelo", actual.getVehiculo().getModelo());
         dto.put("fotoVehiculo", actual.getVehiculo().getFotoVehiculo());
 
-        List> historial = coincidencias.stream().map(o -> {
+        List<Map<String, Object>> historial = coincidencias.stream().map(o -> {
             Map<String, Object> item = new HashMap<>();
             item.put("id", o.getId());
             item.put("fechaIngreso", o.getFechaIngreso());
@@ -203,7 +219,7 @@ public class TallerController {
             item.put("diagnostico", o.getDiagnostico());
             item.put("trabajoRealizado", o.getTrabajoRealizado());
             item.put("valorTotal", o.getValorTotal());
-            item.put("estado", o.getEstado());
+            item.put("estado", o.getEstado() != null ? o.getEstado().name() : "RECIBIDO");
             return item;
         }).toList();
 

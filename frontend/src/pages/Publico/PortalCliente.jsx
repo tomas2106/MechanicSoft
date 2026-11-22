@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import { Search, MapPin, MessageCircle, Sun, Moon, ArrowLeft, Check, Wrench } from "lucide-react";
-import { useTheme } from "../../context/ThemeContext";
+import {
+  Search,
+  MapPin,
+  MessageCircle,
+  ArrowLeft,
+  Check,
+  Wrench,
+  History,
+  Gauge,
+} from "lucide-react";
 import { ordenService } from "../../services/ordenService";
 import { tallerService } from "../../services/tallerService";
 import "./HomePage.css";
@@ -18,7 +26,6 @@ const PASOS_FLUJO = [
 export default function PortalCliente() {
   const { slugTaller } = useParams();
   const [searchParams] = useSearchParams();
-  const { theme, toggleTheme } = useTheme();
 
   const [tallerActual, setTallerActual] = useState(null);
   const [busqueda, setBusqueda] = useState(searchParams.get("q") || "");
@@ -42,13 +49,17 @@ export default function PortalCliente() {
     setResultado(null);
 
     try {
-      const res = await ordenService.consultarPublica(slugTaller || "general", valor.trim());
+      const res = await ordenService.consultarPublica(
+        slugTaller || "general",
+        valor.trim()
+      );
       setResultado(res.data);
     } catch (err) {
       setError(
         err.response?.status === 404
-          ? "No encontramos una orden activa con esa placa o número de WhatsApp."
-          : err.message
+          ? "No encontramos una orden registrada con esa placa o número de WhatsApp."
+          : err.response?.data?.message ||
+              "No se pudo completar la consulta en este momento. Intenta de nuevo."
       );
     } finally {
       setCargando(false);
@@ -71,11 +82,15 @@ export default function PortalCliente() {
     tallerActual?.nombre ||
     (slugTaller && slugTaller !== "general"
       ? slugTaller.replace(/-/g, " ").toUpperCase()
-      : "Consulta General MechanicSoft");
+      : "Portal de Seguimiento MechanicSoft");
 
   const indicePasoActual = resultado
     ? PASOS_FLUJO.findIndex((p) => p.id === resultado.estado)
     : -1;
+
+  const historialMantenimientos = Array.isArray(resultado?.historial)
+    ? resultado.historial
+    : [];
 
   return (
     <div className="portal-container">
@@ -95,37 +110,41 @@ export default function PortalCliente() {
           <ArrowLeft size={17} /> Inicio
         </Link>
 
-        <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }}>
-          <button onClick={toggleTheme} className="icon-btn" title="Cambiar tema">
-            {theme === "light" ? <Moon size={17} /> : <Sun size={17} />}
-          </button>
-          <Link
-            to="/login"
-            className="btn-secondary"
-            style={{ textDecoration: "none", fontSize: "0.85rem" }}
-          >
-            Acceso Taller
-          </Link>
-        </div>
+        <Link
+          to="/login"
+          className="btn-accent"
+          style={{ textDecoration: "none", fontSize: "0.84rem", padding: "0.5rem 0.95rem" }}
+        >
+          <Wrench size={15} /> Ingreso Talleres
+        </Link>
       </header>
 
-      {/* Banner Deportivo del Taller (Estilo CFMOTO) */}
+      {/* Banner Corporativo Esmeralda del Taller */}
       <div
         style={{
-          background: "linear-gradient(135deg, #09090b 0%, #1c1917 65%, #7c2d12 100%)",
+          background:
+            "linear-gradient(135deg, #09090b 0%, #121215 60%, #0f766e 100%)",
           color: "#ffffff",
-          padding: "2.25rem 1.25rem 4rem",
+          padding: "2.4rem 1.25rem 4.2rem",
         }}
       >
-        <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", alignItems: "center", gap: "1.1rem" }}>
+        <div
+          style={{
+            maxWidth: 740,
+            margin: "0 auto",
+            display: "flex",
+            alignItems: "center",
+            gap: "1.15rem",
+          }}
+        >
           {tallerActual?.logoUrl ? (
             <img
               src={tallerActual.logoUrl}
               alt={nombreMostrar}
               style={{
-                width: 68,
-                height: 68,
-                borderRadius: 14,
+                width: 66,
+                height: 66,
+                borderRadius: 12,
                 objectFit: "cover",
                 border: "2px solid rgba(255,255,255,0.2)",
               }}
@@ -133,15 +152,16 @@ export default function PortalCliente() {
           ) : (
             <div
               style={{
-                width: 68,
-                height: 68,
-                borderRadius: 14,
-                backgroundColor: "#ea580c",
+                width: 66,
+                height: 66,
+                borderRadius: 12,
+                backgroundColor: "var(--accent-brand)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: "1.6rem",
+                fontSize: "1.55rem",
                 fontWeight: 900,
+                flexShrink: 0,
               }}
             >
               {nombreMostrar.charAt(0).toUpperCase()}
@@ -149,14 +169,31 @@ export default function PortalCliente() {
           )}
 
           <div>
-            <span style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "#fdba74", fontWeight: 700, letterSpacing: "0.8px" }}>
-              Taller Autorizado
+            <span
+              style={{
+                fontSize: "0.74rem",
+                textTransform: "uppercase",
+                color: "#5eead4",
+                fontWeight: 700,
+                letterSpacing: "0.8px",
+              }}
+            >
+              Seguimiento de Motocicletas
             </span>
-            <h1 style={{ fontSize: "1.55rem", fontWeight: 900, letterSpacing: "-0.4px" }}>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 850, letterSpacing: "-0.4px" }}>
               {nombreMostrar}
             </h1>
             {tallerActual?.ubicacion && (
-              <p style={{ fontSize: "0.85rem", color: "#d4d4d8", display: "flex", alignItems: "center", gap: "0.3rem", marginTop: "0.2rem" }}>
+              <p
+                style={{
+                  fontSize: "0.85rem",
+                  color: "#d4d4d8",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                  marginTop: "0.2rem",
+                }}
+              >
                 <MapPin size={14} /> {tallerActual.ubicacion}
               </p>
             )}
@@ -164,17 +201,25 @@ export default function PortalCliente() {
         </div>
       </div>
 
-      <main className="portal-main" style={{ marginTop: "-2.5rem" }}>
-        <div className="card" style={{ marginBottom: "1.25rem", boxShadow: "0 10px 25px rgba(0,0,0,0.08)" }}>
-          <label style={{ display: "block", fontWeight: 700, fontSize: "0.92rem", marginBottom: "0.6rem" }}>
+      <main className="portal-main" style={{ maxWidth: 740, marginTop: "-2.5rem" }}>
+        {/* Buscador por Placa o WhatsApp */}
+        <div className="card" style={{ marginBottom: "1.25rem", boxShadow: "var(--shadow-md)" }}>
+          <label
+            style={{
+              display: "block",
+              fontWeight: 700,
+              fontSize: "0.94rem",
+              marginBottom: "0.6rem",
+            }}
+          >
             Digita la placa de tu motocicleta o tu número de WhatsApp
           </label>
 
-          <form onSubmit={consultarEstado} style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-            <div className="placa-input-box" style={{ flex: 1, minWidth: 200 }}>
+          <form onSubmit={consultarEstado} style={{ display: "flex", gap: "0.65rem", flexWrap: "wrap" }}>
+            <div className="placa-input-box" style={{ flex: 1, minWidth: 210 }}>
               <input
                 type="text"
-                placeholder="ABC 12D"
+                placeholder="EJ: OWC28D"
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 required
@@ -183,29 +228,31 @@ export default function PortalCliente() {
 
             <button
               type="submit"
-              className="btn-primary"
+              className="btn-accent"
               disabled={cargando}
-              style={{ padding: "0.75rem 1.35rem", backgroundColor: "#ea580c", borderColor: "#ea580c", color: "#fff" }}
+              style={{ padding: "0.75rem 1.4rem" }}
             >
               <Search size={18} />
-              {cargando ? "Buscando..." : "Consultar estado"}
+              {cargando ? "Consultando..." : "Consultar estado"}
             </button>
           </form>
 
           {error && (
-            <p style={{ color: "var(--danger)", fontSize: "0.88rem", marginTop: "0.85rem" }}>
+            <p style={{ color: "var(--danger)", fontSize: "0.88rem", marginTop: "0.85rem", fontWeight: 500 }}>
               {error}
             </p>
           )}
         </div>
 
+        {/* Resultado de la Orden Actual */}
         {resultado && (
-          <div className="card">
+          <div className="card" style={{ marginBottom: "1.25rem" }}>
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "flex-start",
+                gap: "0.75rem",
                 marginBottom: "1.25rem",
               }}
             >
@@ -215,7 +262,8 @@ export default function PortalCliente() {
                   {resultado.marca} {resultado.modelo}
                 </h2>
                 <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                  Orden de servicio #{resultado.id}
+                  Última orden #{resultado.id} •{" "}
+                  {Number(resultado.kilometrajeIngreso || 0).toLocaleString("es-CO")} km
                 </span>
               </div>
               <span className={`status-pill status-${resultado.estado}`}>
@@ -223,7 +271,7 @@ export default function PortalCliente() {
               </span>
             </div>
 
-            {/* Línea de Tiempo de Progreso */}
+            {/* Línea de Tiempo */}
             <div
               style={{
                 display: "flex",
@@ -253,8 +301,8 @@ export default function PortalCliente() {
                         width: 26,
                         height: 26,
                         borderRadius: "50%",
-                        backgroundColor: completado ? "#ea580c" : "var(--bg-subtle)",
-                        color: completado ? "#fff" : "var(--text-muted)",
+                        backgroundColor: completado ? "var(--accent-brand)" : "var(--bg-subtle)",
+                        color: completado ? "#ffffff" : "var(--text-muted)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -285,7 +333,7 @@ export default function PortalCliente() {
                 alt={resultado.placa}
                 style={{
                   width: "100%",
-                  maxHeight: 230,
+                  maxHeight: 240,
                   objectFit: "cover",
                   borderRadius: "var(--radius-md)",
                   marginBottom: "1rem",
@@ -301,7 +349,7 @@ export default function PortalCliente() {
                 fontSize: "0.92rem",
                 display: "flex",
                 flexDirection: "column",
-                gap: "0.6rem",
+                gap: "0.55rem",
               }}
             >
               <p>
@@ -333,7 +381,7 @@ export default function PortalCliente() {
                   }}
                 >
                   <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>
-                    Valor estimado del servicio
+                    Valor del servicio
                   </span>
                   <span style={{ fontSize: "1.15rem", fontWeight: 800 }}>
                     ${Number(resultado.valorTotal).toLocaleString("es-CO")}
@@ -347,15 +395,8 @@ export default function PortalCliente() {
                 href={`https://wa.me/${tallerActual.whatsapp.replace(/\D/g, "")}`}
                 target="_blank"
                 rel="noreferrer"
-                className="btn-primary"
-                style={{
-                  width: "100%",
-                  marginTop: "1.15rem",
-                  textDecoration: "none",
-                  backgroundColor: "#166534",
-                  borderColor: "#166534",
-                  color: "#ffffff",
-                }}
+                className="btn-accent"
+                style={{ width: "100%", marginTop: "1.15rem", textDecoration: "none" }}
               >
                 <MessageCircle size={18} /> Escribir al taller por WhatsApp
               </a>
@@ -363,19 +404,137 @@ export default function PortalCliente() {
           </div>
         )}
 
-        {/* Tarjeta de Especialidades del Taller (Estilo CFMOTO) */}
-        <div className="card" style={{ marginTop: "1.25rem" }}>
-          <h3 style={{ fontSize: "0.95rem", fontWeight: 800, marginBottom: "0.75rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-            <Wrench size={16} color="#ea580c" /> Servicios Especializados
+        {/* Historial Completo de Mantenimientos de la Moto */}
+        {historialMantenimientos.length > 0 && (
+          <div className="card" style={{ marginBottom: "1.25rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.9rem" }}>
+              <History size={18} color="var(--accent-brand)" />
+              <h3 style={{ fontSize: "1.02rem", fontWeight: 800 }}>
+                Historial de Mantenimientos de {resultado?.placa} ({historialMantenimientos.length})
+              </h3>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              {historialMantenimientos.map((item) => (
+                <div
+                  key={item.id}
+                  style={{
+                    backgroundColor: "var(--bg-app)",
+                    border: "1px solid var(--border-color)",
+                    borderLeft: "4px solid var(--accent-brand)",
+                    borderRadius: "8px",
+                    padding: "0.9rem 1rem",
+                    fontSize: "0.88rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "0.5rem",
+                      marginBottom: "0.35rem",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <strong style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                      Orden #{item.id} • <Gauge size={14} color="var(--accent-brand)" />{" "}
+                      {Number(item.kilometrajeIngreso || 0).toLocaleString("es-CO")} km
+                    </strong>
+                    <span className={`status-pill status-${item.estado}`}>
+                      {item.estado.replace(/_/g, " ")}
+                    </span>
+                  </div>
+
+                  <p style={{ color: "var(--text-primary)", fontWeight: 500 }}>
+                    {item.motivoIngreso}
+                  </p>
+
+                  {item.diagnostico && (
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.84rem", marginTop: "0.25rem" }}>
+                      <strong>Diagnóstico:</strong> {item.diagnostico}
+                    </p>
+                  )}
+
+                  {item.trabajoRealizado && (
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.84rem", marginTop: "0.2rem" }}>
+                      <strong>Trabajo realizado:</strong> {item.trabajoRealizado}
+                    </p>
+                  )}
+
+                  {item.valorTotal > 0 && (
+                    <p style={{ fontWeight: 700, marginTop: "0.4rem", fontSize: "0.9rem" }}>
+                      Valor: ${Number(item.valorTotal).toLocaleString("es-CO")}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Tarjeta Informativa cuando aún no se ha realizado búsqueda */}
+        {!resultado && !error && (
+          <div className="card" style={{ marginBottom: "1.25rem" }}>
+            <h3 style={{ fontSize: "1rem", fontWeight: 800, marginBottom: "0.45rem" }}>
+              ¿Qué podrás consultar aquí?
+            </h3>
+            <p style={{ fontSize: "0.88rem", color: "var(--text-secondary)", marginBottom: "0.85rem" }}>
+              Al ingresar la placa de tu motocicleta verás en tiempo real la etapa actual del
+              servicio, el diagnóstico técnico y el historial completo de mantenimientos realizados.
+            </p>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "0.65rem",
+                fontSize: "0.82rem",
+                textAlign: "center",
+              }}
+            >
+              <div style={{ padding: "0.7rem", backgroundColor: "var(--bg-app)", borderRadius: "8px", fontWeight: 600 }}>
+                Estado en Vivo
+              </div>
+              <div style={{ padding: "0.7rem", backgroundColor: "var(--bg-app)", borderRadius: "8px", fontWeight: 600 }}>
+                Historial por Placa
+              </div>
+              <div style={{ padding: "0.7rem", backgroundColor: "var(--bg-app)", borderRadius: "8px", fontWeight: 600 }}>
+                Diagnóstico y Costos
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Especialidades del Taller */}
+        <div className="card">
+          <h3
+            style={{
+              fontSize: "0.95rem",
+              fontWeight: 800,
+              marginBottom: "0.75rem",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.4rem",
+            }}
+          >
+            <Wrench size={16} color="var(--accent-brand)" /> Servicios Especializados
           </h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.6rem", fontSize: "0.8rem", textAlign: "center" }}>
-            <div style={{ padding: "0.65rem", backgroundColor: "var(--bg-app)", borderRadius: "8px", fontWeight: 600 }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "0.65rem",
+              fontSize: "0.82rem",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ padding: "0.7rem", backgroundColor: "var(--bg-app)", borderRadius: "8px", fontWeight: 600 }}>
               Mantenimiento Preventivo
             </div>
-            <div style={{ padding: "0.65rem", backgroundColor: "var(--bg-app)", borderRadius: "8px", fontWeight: 600 }}>
+            <div style={{ padding: "0.7rem", backgroundColor: "var(--bg-app)", borderRadius: "8px", fontWeight: 600 }}>
               Sincronización y Motor
             </div>
-            <div style={{ padding: "0.65rem", backgroundColor: "var(--bg-app)", borderRadius: "8px", fontWeight: 600 }}>
+            <div style={{ padding: "0.7rem", backgroundColor: "var(--bg-app)", borderRadius: "8px", fontWeight: 600 }}>
               Frenos y Suspensión
             </div>
           </div>

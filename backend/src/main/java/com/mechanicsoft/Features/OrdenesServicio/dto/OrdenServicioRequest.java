@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -19,6 +20,8 @@ public class OrdenServicioRequest {
 
     @NotNull(message = "El vehículo es obligatorio")
     private Long vehiculoId;
+
+    private Long tallerId;
 
     @NotNull(message = "El kilometraje es obligatorio")
     @Min(value = 0, message = "El kilometraje no puede ser negativo")
@@ -40,4 +43,8 @@ public class OrdenServicioRequest {
     private Integer diasGarantia;
 
     private Integer proximoServicioDias;
+
+    private Integer prioridadOrden;
+
+    private LocalDateTime fechaIngreso;
 }

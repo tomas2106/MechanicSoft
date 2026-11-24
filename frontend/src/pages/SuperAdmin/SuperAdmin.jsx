@@ -1,19 +1,31 @@
 import { useEffect, useState } from "react";
-import { Plus, Copy, Check, Power, LogOut, Package, CreditCard, Save } from "lucide-react";
+import {
+  Store,
+  Plus,
+  LogOut,
+  Eye,
+  EyeOff,
+  Users,
+  Power,
+  Package,
+  ChevronDown,
+  ChevronUp,
+  MapPin,
+  Mail,
+  KeyRound,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { normalizarTelefonoCO, formatoVisibleCO } from "../../utils/phoneCO";
 import api from "../../services/api";
 
 export default function SuperAdmin() {
   const { user, cerrarSesion } = useAuth();
   const [talleres, setTalleres] = useState([]);
-  const [planes, setPlanes] = useState([]);
-  const [copiadoId, setCopiadoId] = useState(null);
-  const [creando, setCreando] = useState(false);
-  const [guardandoPlanes, setGuardandoPlanes] = useState(false);
-  const [avisoPlanes, setAvisoPlanes] = useState("");
+  const [cargando, setCargando] = useState(true);
+  const [tallerExpandidoId, setTallerExpandidoId] = useState(null);
+  const [mostrarClaves, setMostrarClaves] = useState({});
+  const [mensaje, setMensaje] = useState("");
 
-  const [form, setForm] = useState({
+  const [nuevoTaller, setNuevoTaller] = useState({
     nombreTaller: "",
     nombreAdmin: "",
     email: "",
@@ -24,30 +36,24 @@ export default function SuperAdmin() {
     tieneInventario: true,
   });
 
-  const cargarDatos = async () => {
-    try {
-      const [resTalleres, resPlanes] = await Promise.all([
-        api.get("/superadmin/talleres"),
-        api.get("/public/planes"),
-      ]);
-      setTalleres(Array.isArray(resTalleres.data) ? resTalleres.data : []);
-      setPlanes(Array.isArray(resPlanes.data) ? resPlanes.data : []);
-    } catch {}
+  const cargarTalleres = () => {
+    setCargando(true);
+    api
+      .get("/superadmin/talleres")
+      .then((res) => setTalleres(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setTalleres([]))
+      .finally(() => setCargando(false));
   };
 
   useEffect(() => {
-    cargarDatos();
+    cargarTalleres();
   }, []);
 
-  const handleCrear = async (e) => {
+  const crearTaller = async (e) => {
     e.preventDefault();
-    setCreando(true);
     try {
-      await api.post("/superadmin/talleres", {
-        ...form,
-        whatsapp: normalizarTelefonoCO(form.whatsapp),
-      });
-      setForm({
+      await api.post("/superadmin/talleres", nuevoTaller);
+      setNuevoTaller({
         nombreTaller: "",
         nombreAdmin: "",
         email: "",
@@ -57,252 +63,283 @@ export default function SuperAdmin() {
         esMecanico: true,
         tieneInventario: true,
       });
-      await cargarDatos();
+      setMensaje("Taller y cuenta administradora creados correctamente.");
+      cargarTalleres();
     } catch (err) {
-      alert(err.response?.data?.message || "Error al crear taller");
-    } finally {
-      setCreando(false);
+      alert(err.response?.data?.message || "Error al crear taller.");
     }
   };
 
-  const actualizarCampoPlan = (idx, campo, valor) => {
-    setPlanes((prev) =>
-      prev.map((p, i) => (i === idx ? { ...p, [campo]: valor } : p))
-    );
-  };
-
-  const guardarPlanesEnBackend = async (e) => {
-    e.preventDefault();
-    setGuardandoPlanes(true);
-    setAvisoPlanes("");
-    try {
-      const res = await api.put("/superadmin/planes", planes);
-      if (Array.isArray(res.data)) setPlanes(res.data);
-      setAvisoPlanes("Información de planes mensuales y anuales actualizada.");
-    } catch {
-      setAvisoPlanes("No se pudo guardar la configuración de planes.");
-    } finally {
-      setGuardandoPlanes(false);
-    }
-  };
-
-  const toggleActivo = async (id) => {
+  const alternarEstado = async (id) => {
     await api.patch(`/superadmin/talleres/${id}/estado`);
-    cargarDatos();
+    cargarTalleres();
   };
 
-  const toggleInventario = async (id) => {
+  const alternarInventario = async (id) => {
     await api.patch(`/superadmin/talleres/${id}/inventario`);
-    cargarDatos();
+    cargarTalleres();
   };
 
-  const copiarCredenciales = (t) => {
-    const texto = `Bienvenido a *MechanicSoft*\nTaller: ${t.nombre}\nUbicación: ${t.ubicacion || ""}\nWhatsApp: +${t.whatsapp || ""}\nPlan Inventario/Ventas: ${t.tieneInventario ? "Habilitado" : "No incluido"}\nAcceso: ${window.location.origin}/login\nCorreo: ${t.email}\nPortal clientes: ${window.location.origin}/t/${t.slug}`;
-    navigator.clipboard.writeText(texto);
-    setCopiadoId(t.id);
-    setTimeout(() => setCopiadoId(null), 2000);
+  const toggleClave = (key) => {
+    setMostrarClaves((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-app)" }}>
       <header className="topbar">
         <div className="topbar-left">
-          <div className="brand-wordmark">
+          <div className="brand-wordmark" style={{ fontSize: "1.05rem" }}>
             MECHANIC<span>SOFT</span>
           </div>
           <span style={{ color: "var(--border-color)" }}>|</span>
           <div>
-            <strong style={{ fontSize: "0.95rem" }}>Consola Super Admin</strong>
-            <span className="user-role">{user?.nombre} • Control Central</span>
+            <h1 className="taller-title">Administración Central de Talleres</h1>
+            <span className="user-role">{user?.nombre || "Operación Central"}</span>
           </div>
         </div>
-
-        <button onClick={cerrarSesion} className="btn-secondary" style={{ color: "var(--danger)" }}>
-          <LogOut size={16} /> Salir
+        <button onClick={cerrarSesion} className="icon-btn" style={{ color: "var(--danger)" }} title="Cerrar sesión">
+          <LogOut size={18} />
         </button>
       </header>
 
-      <main style={{ maxWidth: 1020, margin: "0 auto", padding: "1.5rem 1rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        {/* Crear Taller */}
-        <form onSubmit={handleCrear} className="card">
-          <h2 style={{ fontSize: "1.12rem", fontWeight: 800, marginBottom: "1rem" }}>
-            Registrar y Habilitar Taller
+      <main className="main-content" style={{ maxWidth: 1040, margin: "0 auto" }}>
+        {mensaje && (
+          <div
+            style={{
+              backgroundColor: "var(--primary-soft)",
+              border: "1px solid var(--accent-brand)",
+              color: "var(--accent-brand)",
+              padding: "0.75rem 1rem",
+              borderRadius: 8,
+              marginBottom: "1rem",
+              fontWeight: 600,
+              fontSize: "0.88rem",
+            }}
+          >
+            {mensaje}
+          </div>
+        )}
+
+        {/* Formulario Registrar Nuevo Taller */}
+        <form onSubmit={crearTaller} className="card" style={{ marginBottom: "1.5rem" }}>
+          <h2 className="section-title" style={{ display: "flex", alignItems: "center", gap: "0.45rem" }}>
+            <Plus size={18} color="var(--accent-brand)" /> Registrar Nuevo Taller
           </h2>
 
           <div className="form-grid-2">
             <div className="form-group">
-              <label>Nombre del Taller *</label>
-              <input className="input-field" placeholder="Ej: MotoServicio El Rayo" value={form.nombreTaller} onChange={(e) => setForm({ ...form, nombreTaller: e.target.value })} required />
+              <label>Nombre del taller *</label>
+              <input
+                className="input-field"
+                placeholder="Ej: Piston Race"
+                value={nuevoTaller.nombreTaller}
+                onChange={(e) => setNuevoTaller({ ...nuevoTaller, nombreTaller: e.target.value })}
+                required
+              />
             </div>
-
             <div className="form-group">
-              <label>Nombre del Dueño / Admin *</label>
-              <input className="input-field" placeholder="Ej: Andrés Gómez" value={form.nombreAdmin} onChange={(e) => setForm({ ...form, nombreAdmin: e.target.value })} required />
+              <label>Nombre del administrador / dueño *</label>
+              <input
+                className="input-field"
+                placeholder="Ej: Andrés Gómez"
+                value={nuevoTaller.nombreAdmin}
+                onChange={(e) => setNuevoTaller({ ...nuevoTaller, nombreAdmin: e.target.value })}
+                required
+              />
             </div>
-
             <div className="form-group">
               <label>Correo de acceso *</label>
-              <input type="email" className="input-field" placeholder="taller@correo.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
+              <input
+                type="email"
+                className="input-field"
+                placeholder="admin@taller.com"
+                value={nuevoTaller.email}
+                onChange={(e) => setNuevoTaller({ ...nuevoTaller, email: e.target.value })}
+                required
+              />
             </div>
-
             <div className="form-group">
-              <label>Contraseña asignada *</label>
-              <input type="password" className="input-field" placeholder="Contraseña segura" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+              <label>Contraseña inicial *</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Contraseña"
+                value={nuevoTaller.password}
+                onChange={(e) => setNuevoTaller({ ...nuevoTaller, password: e.target.value })}
+                required
+              />
             </div>
-
             <div className="form-group">
-              <label>WhatsApp Colombia (se guarda con +57)</label>
-              <input className="input-field" placeholder="3001234567" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} />
-              {form.whatsapp && (
-                <span style={{ fontSize: "0.75rem", color: "var(--accent-brand)", fontWeight: 600 }}>
-                  Se guardará como: {formatoVisibleCO(form.whatsapp)}
-                </span>
-              )}
+              <label>Ubicación / Ciudad</label>
+              <input
+                className="input-field"
+                placeholder="Ej: Soacha"
+                value={nuevoTaller.ubicacion}
+                onChange={(e) => setNuevoTaller({ ...nuevoTaller, ubicacion: e.target.value })}
+              />
             </div>
-
             <div className="form-group">
-              <label>Ubicación (Ciudad / Sector)</label>
-              <input className="input-field" placeholder="Ej: Soacha, Cundinamarca" value={form.ubicacion} onChange={(e) => setForm({ ...form, ubicacion: e.target.value })} />
+              <label>WhatsApp Colombia (sin +57)</label>
+              <input
+                className="input-field"
+                placeholder="3001234567"
+                value={nuevoTaller.whatsapp}
+                onChange={(e) => setNuevoTaller({ ...nuevoTaller, whatsapp: e.target.value })}
+              />
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", margin: "0.4rem 0 1rem" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontSize: "0.88rem", cursor: "pointer" }}>
-              <input type="checkbox" checked={form.esMecanico} onChange={(e) => setForm({ ...form, esMecanico: e.target.checked })} />
-              Dueño también opera como mecánico
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: "0.45rem", fontSize: "0.88rem", cursor: "pointer" }}>
-              <input type="checkbox" checked={form.tieneInventario} onChange={(e) => setForm({ ...form, tieneInventario: e.target.checked })} />
-              Habilitar módulo de Inventario y Ventas
-            </label>
-          </div>
-
-          <button type="submit" className="btn-accent" disabled={creando}>
-            <Plus size={17} /> {creando ? "Creando..." : "Crear taller"}
+          <button type="submit" className="btn-accent">
+            <Store size={16} /> Crear taller y credenciales
           </button>
         </form>
 
-        {/* Configuración de Planes Mensuales y Anuales */}
-        <form onSubmit={guardarPlanesEnBackend} className="card">
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1rem" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <CreditCard size={18} color="var(--accent-brand)" />
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 800 }}>
-                Planes Mensuales y Anualidades (Visible en Página Pública)
-              </h2>
-            </div>
-            {avisoPlanes && (
-              <span style={{ fontSize: "0.82rem", color: "var(--accent-brand)", fontWeight: 600 }}>
-                {avisoPlanes}
-              </span>
-            )}
-          </div>
+        {/* Listado de Talleres con Contraseñas y Trabajadores */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
+          <h2 style={{ fontSize: "1.12rem", fontWeight: 800 }}>
+            Talleres Registrados ({talleres.length})
+          </h2>
 
-          <div className="form-grid-2">
-            {planes.map((plan, idx) => (
-              <div
-                key={plan.codigo || idx}
-                style={{
-                  border: "1px solid var(--border-color)",
-                  borderRadius: 10,
-                  padding: "1rem",
-                  backgroundColor: "var(--bg-app)",
-                }}
-              >
-                <div className="form-group">
-                  <label>Nombre del plan ({plan.periodicidad || "Plan"})</label>
-                  <input className="input-field" value={plan.nombre || ""} onChange={(e) => actualizarCampoPlan(idx, "nombre", e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label>Valor / Periodicidad</label>
-                  <input className="input-field" value={plan.precioTexto || ""} onChange={(e) => actualizarCampoPlan(idx, "precioTexto", e.target.value)} />
-                </div>
-                <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Descripción del plan</label>
-                  <textarea className="input-field" rows={2} value={plan.descripcion || ""} onChange={(e) => actualizarCampoPlan(idx, "descripcion", e.target.value)} />
-                </div>
-              </div>
-            ))}
-          </div>
+          {cargando ? (
+            <div className="card">Cargando talleres...</div>
+          ) : (
+            talleres.map((t) => {
+              const expandido = tallerExpandidoId === t.id;
+              const equipo = Array.isArray(t.equipo) ? t.equipo : [];
+              const claveVisible = Boolean(mostrarClaves[`t-${t.id}`]);
 
-          <button type="submit" className="btn-primary" disabled={guardandoPlanes} style={{ marginTop: "1rem" }}>
-            <Save size={16} /> {guardandoPlanes ? "Guardando planes..." : "Guardar información de planes"}
-          </button>
-        </form>
+              return (
+                <div key={t.id} className="card">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.75rem" }}>
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+                        <strong style={{ fontSize: "1.05rem" }}>{t.nombre}</strong>
+                        <span className={`status-pill ${t.activo ? "status-LISTO_PARA_ENTREGA" : "status-CANCELADO"}`}>
+                          {t.activo ? "Activo" : "Suspendido"}
+                        </span>
+                        <span style={{ fontSize: "0.76rem", color: "var(--text-secondary)" }}>
+                          • {equipo.length} usuario(s) en equipo
+                        </span>
+                      </div>
 
-        {/* Listado Claro y Diferenciado de Talleres */}
-        <div className="card" style={{ padding: 0, overflowX: "auto" }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Taller y Ubicación</th>
-                <th>Técnico y Jornada</th>
-                <th>Cuenta y Plan</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {talleres.map((t) => (
-                <tr key={t.id}>
-                  <td>
-                    <strong style={{ fontSize: "0.95rem" }}>{t.nombre}</strong>
-                    <div style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-                      Ubicación: {t.ubicacion || "No definida"} • Ruta: /t/{t.slug}
+                      <div style={{ fontSize: "0.84rem", color: "var(--text-secondary)", marginTop: "0.3rem", display: "flex", flexWrap: "wrap", gap: "0.9rem" }}>
+                        <span><MapPin size={13} style={{ verticalAlign: "middle" }} /> {t.ubicacion || "Sin ubicación"}</span>
+                        <span><Mail size={13} style={{ verticalAlign: "middle" }} /> {t.email}</span>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                          <KeyRound size={13} color="var(--accent-brand)" /> Contraseña Admin:{" "}
+                          <strong style={{ color: "var(--text-primary)" }}>
+                            {claveVisible ? t.password || "(sin clave)" : "••••••••"}
+                          </strong>
+                          <button
+                            type="button"
+                            onClick={() => toggleClave(`t-${t.id}`)}
+                            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--accent-brand)" }}
+                            title={claveVisible ? "Ocultar contraseña" : "Ver contraseña"}
+                          >
+                            {claveVisible ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                        </span>
+                      </div>
                     </div>
-                  </td>
-                  <td>
-                    <div style={{ fontSize: "0.84rem", fontWeight: 600 }}>
-                      Técnico: {t.tecnicoNombre || "Asignado"}
+
+                    <div style={{ display: "flex", gap: "0.45rem", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => setTallerExpandidoId(expandido ? null : t.id)}
+                        className="btn-secondary"
+                        style={{ fontSize: "0.8rem" }}
+                      >
+                        <Users size={15} /> {expandido ? "Ocultar equipo" : `Ver trabajadores (${equipo.length})`}
+                        {expandido ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => alternarInventario(t.id)}
+                        className="btn-secondary"
+                        style={{ fontSize: "0.8rem" }}
+                      >
+                        <Package size={15} /> {t.tieneInventario ? "Inv: Sí" : "Inv: No"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => alternarEstado(t.id)}
+                        className="btn-secondary"
+                        style={{ fontSize: "0.8rem", color: t.activo ? "var(--danger)" : "var(--accent-brand)" }}
+                      >
+                        <Power size={15} /> {t.activo ? "Suspender" : "Activar"}
+                      </button>
                     </div>
-                    <span
-                      className="status-pill"
+                  </div>
+
+                  {/* Detalle de Trabajadores y sus contraseñas */}
+                  {expandido && (
+                    <div
                       style={{
-                        marginTop: "0.25rem",
-                        display: "inline-block",
-                        backgroundColor: t.abiertoHoy ? "#dcfce7" : "#e4e4e7",
-                        color: t.abiertoHoy ? "#166534" : "#3f3f46",
+                        marginTop: "0.9rem",
+                        paddingTop: "0.85rem",
+                        borderTop: "1px solid var(--border-color)",
                       }}
                     >
-                      {t.abiertoHoy ? "Trabajando ahora mismo" : "Jornada no iniciada"}
-                    </span>
-                  </td>
-                  <td>
-                    <div style={{ fontSize: "0.82rem" }}>
-                      <strong>Correo:</strong> {t.email}
-                    </div>
-                    <div style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      WhatsApp: {t.whatsapp ? formatoVisibleCO(t.whatsapp) : "Sin número"} •{" "}
-                      <strong style={{ color: "var(--accent-brand)" }}>
-                        {t.tieneInventario ? "Con Inventario/Ventas" : "Plan Base"}
+                      <strong style={{ fontSize: "0.85rem", display: "block", marginBottom: "0.5rem" }}>
+                        Integrantes y credenciales registradas en {t.nombre}:
                       </strong>
+                      {equipo.length === 0 ? (
+                        <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
+                          Este taller aún no tiene trabajadores adicionales registrados.
+                        </p>
+                      ) : (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                          {equipo.map((u) => {
+                            const verClaveUser = Boolean(mostrarClaves[`u-${u.id}`]);
+                            return (
+                              <div
+                                key={u.id}
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  flexWrap: "wrap",
+                                  gap: "0.5rem",
+                                  padding: "0.55rem 0.75rem",
+                                  backgroundColor: "var(--bg-app)",
+                                  borderRadius: 8,
+                                  border: "1px solid var(--border-color)",
+                                  fontSize: "0.83rem",
+                                }}
+                              >
+                                <div>
+                                  <strong>{u.nombre}</strong>{" "}
+                                  <span className="status-pill" style={{ fontSize: "0.7rem" }}>
+                                    {u.rol === "ADMIN_TALLER" ? "Administrador" : "Trabajador / Mecánico"}
+                                  </span>
+                                  <span style={{ color: "var(--text-secondary)", marginLeft: "0.5rem" }}>
+                                    {u.email}
+                                  </span>
+                                </div>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                                  <span>Clave:</span>
+                                  <strong>{verClaveUser ? u.password : "••••••"}</strong>
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleClave(`u-${u.id}`)}
+                                    style={{ background: "none", border: "none", cursor: "pointer", color: "var(--accent-brand)" }}
+                                  >
+                                    {verClaveUser ? <EyeOff size={14} /> : <Eye size={14} />}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", alignItems: "center" }}>
-                      <span className={`status-pill ${t.activo ? "status-LISTO_PARA_ENTREGA" : "status-RECIBIDO"}`}>
-                        {t.activo ? "Activo" : "Suspendido"}
-                      </span>
-                      <button onClick={() => copiarCredenciales(t)} className="btn-secondary" style={{ fontSize: "0.8rem" }}>
-                        {copiadoId === t.id ? <Check size={14} /> : <Copy size={14} />}
-                        {copiadoId === t.id ? "Copiado" : "Enlace"}
-                      </button>
-                      <button
-                        onClick={() => toggleInventario(t.id)}
-                        className="icon-btn"
-                        title="Habilitar/deshabilitar inventario"
-                        style={{ color: t.tieneInventario ? "var(--accent-brand)" : "var(--text-muted)" }}
-                      >
-                        <Package size={15} />
-                      </button>
-                      <button onClick={() => toggleActivo(t.id)} className="icon-btn" title="Activar/suspender cuenta">
-                        <Power size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </main>
     </div>

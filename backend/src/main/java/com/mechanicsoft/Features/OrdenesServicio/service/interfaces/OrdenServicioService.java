@@ -9,17 +9,17 @@ import java.util.Optional;
 
 public interface OrdenServicioService {
 
-    OrdenServicio guardar(OrdenServicioRequest request);
+    OrdenServicio guardar(OrdenServicioRequest request, Long tallerIdHeader);
 
-    List<OrdenServicio> listar();
+    List<OrdenServicio> listar(Long tallerIdHeader);
 
     Optional<OrdenServicio> buscarPorId(Long id);
 
     List<OrdenServicio> buscarPorVehiculo(Long vehiculoId);
 
-    List<OrdenServicio> buscarPorEstado(EstadoOrden estado);
+    List<OrdenServicio> buscarPorEstado(EstadoOrden estado, Long tallerIdHeader);
 
-    OrdenServicio actualizar(Long id, OrdenServicioRequest request);
+    OrdenServicio actualizar(Long id, OrdenServicioRequest request, Long tallerIdHeader);
 
     OrdenServicio cambiarEstado(Long id, EstadoOrden estado);
 

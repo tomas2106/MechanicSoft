@@ -10,32 +10,31 @@ import lombok.Setter;
 @Setter
 public class VehiculoRequest {
 
-    @NotBlank
+    @NotBlank(message = "La placa es obligatoria")
     private String placa;
 
-    @NotBlank
+    @NotBlank(message = "La marca es obligatoria")
     private String marca;
 
-    @NotBlank
+    @NotBlank(message = "El modelo es obligatorio")
     private String modelo;
 
     private Integer anio;
 
-    @NotNull
-    @Min(50)
-    private Integer cilindrajeCc;
+    @Min(value = 40, message = "El cilindraje debe ser mayor a 40 cc")
+    private Integer cilindrajeCc = 150;
 
     private String color;
 
-    @NotNull
-    @Min(0)
-    private Integer kilometraje;
+    @Min(value = 0, message = "El kilometraje no puede ser negativo")
+    private Integer kilometraje = 0;
 
     private String fotoVehiculo;
 
     private String observaciones;
 
-    @NotNull
+    @NotNull(message = "El cliente es obligatorio")
     private Long clienteId;
 
+    private Long tallerId;
 }

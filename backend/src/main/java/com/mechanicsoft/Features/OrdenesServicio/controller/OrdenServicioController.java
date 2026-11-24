@@ -19,70 +19,54 @@ public class OrdenServicioController {
         this.service = service;
     }
 
-    // Crear una orden
     @PostMapping
     public OrdenServicio guardar(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
             @Valid @RequestBody OrdenServicioRequest request) {
-
-        return service.guardar(request);
+        return service.guardar(request, tallerId);
     }
 
-    // Listar órdenes activas
     @GetMapping
-    public List<OrdenServicio> listar() {
-
-        return service.listar();
+    public List<OrdenServicio> listar(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId) {
+        return service.listar(tallerId);
     }
 
-    // Buscar orden por ID
     @GetMapping("/{id}")
-    public OrdenServicio buscarPorId(
-            @PathVariable Long id) {
-
+    public OrdenServicio buscarPorId(@PathVariable Long id) {
         return service.buscarPorId(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Orden de servicio no encontrada."));
+                .orElseThrow(() -> new RuntimeException("Orden de servicio no encontrada."));
     }
 
-    // Buscar historial de un vehículo
     @GetMapping("/vehiculo/{vehiculoId}")
-    public List<OrdenServicio> buscarPorVehiculo(
-            @PathVariable Long vehiculoId) {
-
+    public List<OrdenServicio> buscarPorVehiculo(@PathVariable Long vehiculoId) {
         return service.buscarPorVehiculo(vehiculoId);
     }
 
-    // Buscar órdenes por estado
     @GetMapping("/estado/{estado}")
     public List<OrdenServicio> buscarPorEstado(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
             @PathVariable EstadoOrden estado) {
-
-        return service.buscarPorEstado(estado);
+        return service.buscarPorEstado(estado, tallerId);
     }
 
-    // Actualizar una orden
     @PutMapping("/{id}")
     public OrdenServicio actualizar(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
             @PathVariable Long id,
             @Valid @RequestBody OrdenServicioRequest request) {
-
-        return service.actualizar(id, request);
+        return service.actualizar(id, request, tallerId);
     }
 
-    // Cambiar estado
     @PatchMapping("/{id}/estado")
     public OrdenServicio cambiarEstado(
             @PathVariable Long id,
             @RequestParam EstadoOrden estado) {
-
         return service.cambiarEstado(id, estado);
     }
 
-    // Desactivar orden
     @DeleteMapping("/{id}")
-    public void eliminar(
-            @PathVariable Long id) {
-
+    public void eliminar(@PathVariable Long id) {
         service.eliminar(id);
     }
 }

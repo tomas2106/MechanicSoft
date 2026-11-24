@@ -8,19 +8,19 @@ import java.util.Optional;
 
 public interface VehiculoRepository extends JpaRepository<Vehiculo, Long> {
 
-    // Buscar por placa (solo activos)
     Optional<Vehiculo> findByPlacaAndActivoTrue(String placa);
 
-    // Buscar por ID (solo activos)
+    Optional<Vehiculo> findByPlacaAndTallerIdAndActivoTrue(String placa, Long tallerId);
+
     Optional<Vehiculo> findByIdAndActivoTrue(Long id);
 
-    // Listar todos los vehículos activos
     List<Vehiculo> findByActivoTrue();
 
-    // Listar vehículos activos de un cliente
+    List<Vehiculo> findByTallerIdAndActivoTrue(Long tallerId);
+
     List<Vehiculo> findByClienteIdAndActivoTrue(Long clienteId);
 
-    // Verificar si una placa ya existe
-    boolean existsByPlaca(String placa);
+    boolean existsByPlacaAndActivoTrue(String placa);
 
+    boolean existsByPlacaAndTallerIdAndActivoTrue(String placa, Long tallerId);
 }

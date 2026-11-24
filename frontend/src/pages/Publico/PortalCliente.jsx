@@ -102,7 +102,9 @@ export default function PortalCliente() {
     } catch (err) {
       setError(
         err.response?.status === 404
-          ? "No encontramos una orden registrada con esa placa o número de WhatsApp."
+          ? slugTaller && slugTaller !== "general"
+            ? "Esta motocicleta no tiene registros en este taller."
+            : "No encontramos una orden registrada con esa placa o número de WhatsApp."
           : err.response?.data?.message || "Error al consultar."
       );
     } finally {
@@ -141,12 +143,15 @@ export default function PortalCliente() {
     }
   };
 
+  // Siempre prioriza el taller real devuelto por la orden consultada
   const nombreTallerRegistro =
     resultado?.tallerNombre ||
     tallerActual?.nombre ||
-    (slugTaller && slugTaller !== "general" ? slugTaller.replace(/-/g, " ").toUpperCase() : "Taller Asociado");
+    (slugTaller && slugTaller !== "general" ? slugTaller.replace(/-/g, " ").toUpperCase() : "Consulta de Motocicleta");
 
-  const logoTaller = tallerActual?.logoUrl || resultado?.tallerLogoUrl || "";
+  const logoTaller = resultado?.tallerLogoUrl || tallerActual?.logoUrl || "";
+  const ubicacionTaller = resultado?.tallerUbicacion || tallerActual?.ubicacion || "";
+  const whatsappTaller = resultado?.tallerWhatsapp || tallerActual?.whatsapp || "";
 
   const trabajandoAhora = Boolean(
     resultado?.trabajandoAhora ?? tallerActual?.trabajandoAhora ?? tallerActual?.abiertoHoy
@@ -198,42 +203,44 @@ export default function PortalCliente() {
 
             <div>
               <span style={{ fontSize: "0.74rem", textTransform: "uppercase", color: "#5eead4", fontWeight: 700 }}>
-                Taller Autorizado • Seguimiento y Citas
+                Taller Registrado • Seguimiento y Citas
               </span>
               <h1 style={{ fontSize: "1.55rem", fontWeight: 850, marginTop: "0.1rem" }}>{nombreTallerRegistro}</h1>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.85rem", marginTop: "0.3rem", fontSize: "0.84rem", color: "#d4d4d8" }}>
-                {tallerActual?.ubicacion && (
+                {ubicacionTaller && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
-                    <MapPin size={14} color="#5eead4" /> {tallerActual.ubicacion}
+                    <MapPin size={14} color="#5eead4" /> {ubicacionTaller}
                   </span>
                 )}
-                {tallerActual?.whatsapp && (
+                {whatsappTaller && (
                   <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
-                    <Phone size={14} color="#5eead4" /> {formatoVisibleCO(tallerActual.whatsapp)}
+                    <Phone size={14} color="#5eead4" /> {formatoVisibleCO(whatsappTaller)}
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem", fontSize: "0.82rem" }}>
-            <span
-              className="status-pill"
-              style={{
-                backgroundColor: trabajandoAhora ? "#dcfce7" : "#e4e4e7",
-                color: trabajandoAhora ? "#166534" : "#3f3f46",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.35rem",
-                fontWeight: 700,
-              }}
-            >
-              <Activity size={14} /> {trabajandoAhora ? "Abierto • Trabajando ahora mismo" : "Taller cerrado en este momento"}
-            </span>
-            <span style={{ color: "#e4e4e7", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-              <UserCheck size={14} color="#5eead4" /> Técnico: <strong>{tecnicoAsignado}</strong>
-            </span>
-          </div>
+          {(tallerActual || resultado) && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.4rem", fontSize: "0.82rem" }}>
+              <span
+                className="status-pill"
+                style={{
+                  backgroundColor: trabajandoAhora ? "#dcfce7" : "#e4e4e7",
+                  color: trabajandoAhora ? "#166534" : "#3f3f46",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "0.35rem",
+                  fontWeight: 700,
+                }}
+              >
+                <Activity size={14} /> {trabajandoAhora ? "Abierto • Trabajando ahora mismo" : "Taller cerrado en este momento"}
+              </span>
+              <span style={{ color: "#e4e4e7", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                <UserCheck size={14} color="#5eead4" /> Técnico: <strong>{tecnicoAsignado}</strong>
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -317,7 +324,7 @@ export default function PortalCliente() {
           )}
         </div>
 
-        {/* Ficha Informativa del Taller cuando el cliente entra por enlace directo */}
+        {/* Ficha Informativa del Taller */}
         {tallerActual && !resultado && (
           <div className="card" style={{ marginBottom: "1.35rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.85rem" }}>
@@ -369,8 +376,8 @@ export default function PortalCliente() {
           <div className="card" style={{ marginBottom: "1.35rem" }}>
             <div style={{ backgroundColor: "var(--primary-soft)", border: "1px solid var(--accent-brand)", borderRadius: 8, padding: "0.75rem 0.95rem", marginBottom: "1rem", fontSize: "0.84rem", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem" }}>
               <div>
-                <strong>Taller:</strong> {nombreTallerRegistro}
-                {resultado.tallerUbicacion ? ` • ${resultado.tallerUbicacion}` : ""}
+                <strong>Taller donde se atiende:</strong> {nombreTallerRegistro}
+                {ubicacionTaller ? ` • ${ubicacionTaller}` : ""}
               </div>
               <div>
                 <strong>Técnico:</strong> {tecnicoAsignado} •{" "}
@@ -418,9 +425,9 @@ export default function PortalCliente() {
               </p>
             )}
 
-            {tallerActual?.whatsapp && (
+            {whatsappTaller && (
               <a
-                href={`https://wa.me/${normalizarTelefonoCO(tallerActual.whatsapp)}`}
+                href={`https://wa.me/${normalizarTelefonoCO(whatsappTaller)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="btn-accent"
@@ -436,7 +443,7 @@ export default function PortalCliente() {
         {historial.length > 0 && (
           <div className="card" style={{ marginBottom: "1.35rem" }}>
             <h3 style={{ fontSize: "1rem", fontWeight: 800, marginBottom: "0.8rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-              <History size={17} color="var(--accent-brand)" /> Historial de Mantenimientos ({historial.length})
+              <History size={17} color="var(--accent-brand)" /> Historial en {nombreTallerRegistro} ({historial.length})
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem" }}>
               {historial.map((h) => (
@@ -473,7 +480,6 @@ export default function PortalCliente() {
             )}
 
             <form onSubmit={agendarCita}>
-              {/* Paso 1: Selección rápida de servicio */}
               <div className="form-group">
                 <label>1. Selecciona el tipo de servicio *</label>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "0.45rem", marginBottom: "0.55rem" }}>
@@ -509,7 +515,6 @@ export default function PortalCliente() {
                 />
               </div>
 
-              {/* Paso 2: Fecha y Franja Horaria */}
               <div className="form-grid-2">
                 <div className="form-group">
                   <label>2. Fecha de ingreso *</label>
@@ -535,7 +540,6 @@ export default function PortalCliente() {
                 </div>
               </div>
 
-              {/* Paso 3: Datos del propietario y placa */}
               <div className="form-grid-2">
                 <div className="form-group">
                   <label>3. Tu nombre *</label>

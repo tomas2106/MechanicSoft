@@ -12,7 +12,19 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("ms_token");
-  const tallerId = localStorage.getItem("ms_taller_id");
+  let tallerId = localStorage.getItem("ms_taller_id");
+
+  if (!tallerId) {
+    try {
+      const tallerObj = JSON.parse(localStorage.getItem("ms_taller") || "null");
+      if (tallerObj?.id) {
+        tallerId = String(tallerObj.id);
+        localStorage.setItem("ms_taller_id", tallerId);
+      }
+    } catch {
+      // Ignorar si no es JSON válido
+    }
+  }
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

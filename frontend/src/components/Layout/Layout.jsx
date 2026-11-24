@@ -5,6 +5,7 @@ import {
   Bike,
   Users,
   ShoppingCart,
+  Package,
   Settings,
   LogOut,
 } from "lucide-react";
@@ -13,7 +14,15 @@ import "./Layout.css";
 
 export default function Layout() {
   const { user, taller, cerrarSesion } = useAuth();
-  const mostrarVentas = taller?.tieneInventario !== false;
+  const esAdminTaller = user?.rol === "ADMIN_TALLER";
+  const tallerKey = taller?.id || "default";
+
+  const empleadosEditanInventario =
+    Boolean(taller?.empleadosEditanInventario) ||
+    localStorage.getItem(`ms_perm_inv_${tallerKey}`) === "true";
+
+  const mostrarModuloInventario =
+    taller?.tieneInventario !== false && (esAdminTaller || empleadosEditanInventario);
 
   return (
     <div className="app-shell">
@@ -26,7 +35,7 @@ export default function Layout() {
           <div>
             <h1 className="taller-title">{taller?.nombre || "Taller"}</h1>
             <span className="user-role">
-              {user?.nombre} • {user?.rol === "MECANICO" ? "Mecánico" : "Administrador"}
+              {user?.nombre} • {esAdminTaller ? "Administrador" : "Mecánico"}
             </span>
           </div>
         </div>
@@ -56,14 +65,17 @@ export default function Layout() {
         <NavLink to="/panel/clientes" className="nav-item">
           <Users size={17} /> Clientes
         </NavLink>
-        {mostrarVentas && (
+        {mostrarModuloInventario && (
           <NavLink to="/panel/ventas" className="nav-item">
-            <ShoppingCart size={17} /> Ventas
+            {esAdminTaller ? <ShoppingCart size={17} /> : <Package size={17} />}
+            {esAdminTaller ? " Ventas" : " Inventario"}
           </NavLink>
         )}
-        <NavLink to="/panel/configuracion" className="nav-item">
-          <Settings size={17} /> Taller
-        </NavLink>
+        {esAdminTaller && (
+          <NavLink to="/panel/configuracion" className="nav-item">
+            <Settings size={17} /> Taller
+          </NavLink>
+        )}
       </nav>
 
       <main className="main-content">
@@ -83,10 +95,10 @@ export default function Layout() {
           <Bike size={20} />
           <span>Motos</span>
         </NavLink>
-        {mostrarVentas ? (
+        {mostrarModuloInventario ? (
           <NavLink to="/panel/ventas" className="mobile-nav-item">
-            <ShoppingCart size={20} />
-            <span>Ventas</span>
+            {esAdminTaller ? <ShoppingCart size={20} /> : <Package size={20} />}
+            <span>{esAdminTaller ? "Ventas" : "Inventario"}</span>
           </NavLink>
         ) : (
           <NavLink to="/panel/clientes" className="mobile-nav-item">
@@ -94,10 +106,12 @@ export default function Layout() {
             <span>Clientes</span>
           </NavLink>
         )}
-        <NavLink to="/panel/configuracion" className="mobile-nav-item">
-          <Settings size={20} />
-          <span>Taller</span>
-        </NavLink>
+        {esAdminTaller && (
+          <NavLink to="/panel/configuracion" className="mobile-nav-item">
+            <Settings size={20} />
+            <span>Taller</span>
+          </NavLink>
+        )}
       </nav>
     </div>
   );

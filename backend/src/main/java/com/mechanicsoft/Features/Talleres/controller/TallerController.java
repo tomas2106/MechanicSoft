@@ -144,10 +144,43 @@ public class TallerController {
         return ResponseEntity.ok(planesConfigurados);
     }
 
-    // --- ADMINISTRACIÓN CENTRAL DE TALLERES ---
+    // --- ADMINISTRACIÓN CENTRAL DE TALLERES (CON CONTRASEÑAS Y EQUIPO VISIBLES) ---
     @GetMapping("/superadmin/talleres")
     public List listarTodosTalleres() {
-        return tallerRepository.findAll();
+        List resultado = new ArrayList();
+        for (Object obj : tallerRepository.findAll()) {
+            Taller t = (Taller) obj;
+            Map item = new HashMap();
+            item.put("id", t.getId());
+            item.put("nombre", t.getNombre());
+            item.put("slug", t.getSlug());
+            item.put("email", t.getEmail());
+            item.put("password", t.getPassword());
+            item.put("ubicacion", t.getUbicacion());
+            item.put("whatsapp", t.getWhatsapp());
+            item.put("logoUrl", t.getLogoUrl());
+            item.put("activo", t.getActivo());
+            item.put("abiertoHoy", t.getAbiertoHoy());
+            item.put("tieneInventario", t.getTieneInventario());
+            item.put("citasHabilitadas", t.getCitasHabilitadas());
+            item.put("cuposDiarios", t.getCuposDiarios());
+
+            List equipoList = new ArrayList();
+            for (Object uObj : usuarioRepository.findByTallerIdAndActivoTrue(t.getId())) {
+                UsuarioTaller u = (UsuarioTaller) uObj;
+                Map uMap = new HashMap();
+                uMap.put("id", u.getId());
+                uMap.put("nombre", u.getNombre());
+                uMap.put("email", u.getEmail());
+                uMap.put("password", u.getPassword());
+                uMap.put("rol", u.getRol());
+                uMap.put("esMecanico", u.getEsMecanico());
+                equipoList.add(uMap);
+            }
+            item.put("equipo", equipoList);
+            resultado.add(item);
+        }
+        return resultado;
     }
 
     @PostMapping("/superadmin/talleres")
@@ -210,6 +243,27 @@ public class TallerController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
+    // Cambiar contraseña del administrador del taller (y mantener sincronizada para SuperAdmin)
+    @PatchMapping("/talleres/{id}/password")
+    public ResponseEntity actualizarPasswordTaller(@PathVariable Long id, @RequestBody Map body) {
+        String nuevaPassword = body.get("password") != null ? String.valueOf(body.get("password")).trim() : "";
+        if (nuevaPassword.length() < 4) {
+            return ResponseEntity.badRequest().body(Map.of("message", "La contraseña debe tener al menos 4 caracteres."));
+        }
+        return tallerRepository.findById(id).map(t -> {
+            t.setPassword(nuevaPassword);
+            tallerRepository.save(t);
+            for (Object obj : usuarioRepository.findByTallerIdAndActivoTrue(id)) {
+                UsuarioTaller u = (UsuarioTaller) obj;
+                if ("ADMIN_TALLER".equalsIgnoreCase(u.getRol())) {
+                    u.setPassword(nuevaPassword);
+                    usuarioRepository.save(u);
+                }
+            }
+            return ResponseEntity.ok(Map.of("message", "Contraseña actualizada correctamente"));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
     // --- GESTIÓN DE TRABAJADORES DENTRO DE UN TALLER ---
     @GetMapping("/talleres/{tallerId}/equipo")
     public List listarEquipo(@PathVariable Long tallerId) {
@@ -223,7 +277,12 @@ public class TallerController {
         return tallerRepository.findById(tallerId).map(taller -> {
             nuevo.setTaller(taller);
             nuevo.setActivo(true);
-            if (nuevo.getRol() == null) nuevo.setRol("MECANICO");
+            if (nuevo.getRol() == null || nuevo.getRol().isBlank()) {
+                nuevo.setRol("MECANICO");
+            }
+            if (nuevo.getEsMecanico() == null) {
+                nuevo.setEsMecanico(true);
+            }
             return ResponseEntity.ok((Object) usuarioRepository.save(nuevo));
         }).orElse(ResponseEntity.notFound().build());
     }
@@ -350,12 +409,37 @@ public class TallerController {
         String query = q.trim().toUpperCase().replaceAll("\\s+", "");
         String telQuery = q.trim().replaceAll("\\D+", "");
 
+        boolean filtrarPorTallerEspecifico = taller != null
+                && !taller.isBlank()
+                && !"general".equalsIgnoreCase(taller.trim());
+
+        Taller tallerSolicitado = null;
+        if (filtrarPorTallerEspecifico) {
+            Optional optTaller = tallerRepository.findBySlugAndActivoTrue(taller.trim());
+            if (optTaller.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            tallerSolicitado = (Taller) optTaller.get();
+        }
+
         List coincidencias = new ArrayList();
         for (Object obj : ordenRepository.findAll()) {
             OrdenServicio o = (OrdenServicio) obj;
             if (o == null || Boolean.FALSE.equals(o.getActivo()) || o.getVehiculo() == null) {
                 continue;
             }
+
+            Taller tallerDeLaOrden = o.getTaller();
+            if (tallerDeLaOrden == null && o.getVehiculo().getTaller() != null) {
+                tallerDeLaOrden = o.getVehiculo().getTaller();
+            }
+
+            if (filtrarPorTallerEspecifico) {
+                if (tallerDeLaOrden == null || !tallerDeLaOrden.getId().equals(tallerSolicitado.getId())) {
+                    continue;
+                }
+            }
+
             String placa = o.getVehiculo().getPlaca() != null
                     ? o.getVehiculo().getPlaca().replaceAll("\\s+", "").toUpperCase()
                     : "";
@@ -384,10 +468,21 @@ public class TallerController {
             }
         });
 
-        Taller tallerRef = tallerRepository.findBySlugAndActivoTrue(taller)
-                .orElseGet(() -> tallerRepository.findByActivoTrue().stream().findFirst().orElse(null));
-
         OrdenServicio actual = (OrdenServicio) coincidencias.get(0);
+
+        Taller tallerReal = actual.getTaller() != null
+                ? actual.getTaller()
+                : (actual.getVehiculo().getTaller() != null ? actual.getVehiculo().getTaller() : tallerSolicitado);
+
+        List historialMismoTaller = new ArrayList();
+        for (Object obj : coincidencias) {
+            OrdenServicio o = (OrdenServicio) obj;
+            Taller tOrd = o.getTaller() != null ? o.getTaller() : o.getVehiculo().getTaller();
+            if (tallerReal == null || (tOrd != null && tOrd.getId().equals(tallerReal.getId()))) {
+                historialMismoTaller.add(o);
+            }
+        }
+
         Map dto = new HashMap();
         dto.put("id", actual.getId());
         dto.put("estado", actual.getEstado() != null ? actual.getEstado().name() : "RECIBIDO");
@@ -402,14 +497,16 @@ public class TallerController {
         dto.put("marca", actual.getVehiculo().getMarca());
         dto.put("modelo", actual.getVehiculo().getModelo());
         dto.put("fotoVehiculo", actual.getVehiculo().getFotoVehiculo());
-        dto.put("tallerNombre", tallerRef != null ? tallerRef.getNombre() : "Taller Autorizado");
-        dto.put("tallerUbicacion", tallerRef != null ? tallerRef.getUbicacion() : "");
-        dto.put("tallerLogoUrl", tallerRef != null ? tallerRef.getLogoUrl() : null);
-        dto.put("trabajandoAhora", tallerRef != null && Boolean.TRUE.equals(tallerRef.getAbiertoHoy()));
-        dto.put("tecnicoNombre", obtenerTecnicoPrincipal(tallerRef != null ? tallerRef.getId() : null, tallerRef));
+        dto.put("tallerNombre", tallerReal != null ? tallerReal.getNombre() : "Taller Registrado");
+        dto.put("tallerSlug", tallerReal != null ? tallerReal.getSlug() : "general");
+        dto.put("tallerUbicacion", tallerReal != null ? tallerReal.getUbicacion() : "");
+        dto.put("tallerWhatsapp", tallerReal != null ? normalizarColombia(tallerReal.getWhatsapp()) : "");
+        dto.put("tallerLogoUrl", tallerReal != null ? tallerReal.getLogoUrl() : null);
+        dto.put("trabajandoAhora", tallerReal != null && Boolean.TRUE.equals(tallerReal.getAbiertoHoy()));
+        dto.put("tecnicoNombre", obtenerTecnicoPrincipal(tallerReal != null ? tallerReal.getId() : null, tallerReal));
 
         List historial = new ArrayList();
-        for (Object obj : coincidencias) {
+        for (Object obj : historialMismoTaller) {
             OrdenServicio o = (OrdenServicio) obj;
             Map item = new HashMap();
             item.put("id", o.getId());
@@ -419,6 +516,7 @@ public class TallerController {
             item.put("diagnostico", o.getDiagnostico());
             item.put("trabajoRealizado", o.getTrabajoRealizado());
             item.put("valorTotal", o.getValorTotal());
+            item.put("diasGarantia", o.getDiasGarantia() != null ? o.getDiasGarantia() : 30);
             item.put("estado", o.getEstado() != null ? o.getEstado().name() : "RECIBIDO");
             historial.add(item);
         }

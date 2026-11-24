@@ -18,13 +18,16 @@ public class ClienteController {
     }
 
     @PostMapping
-    public Cliente guardar(@Valid @RequestBody Cliente cliente) {
-        return service.guardar(cliente);
+    public Cliente guardar(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
+            @Valid @RequestBody Cliente cliente) {
+        return service.guardar(cliente, tallerId);
     }
 
     @GetMapping
-    public List<Cliente> listar() {
-        return service.listar();
+    public List<Cliente> listar(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId) {
+        return service.listar(tallerId);
     }
 
     @GetMapping("/{id}")
@@ -34,20 +37,23 @@ public class ClienteController {
     }
 
     @GetMapping("/telefono/{telefono}")
-    public Cliente buscarPorTelefono(@PathVariable String telefono) {
-        return service.buscarPorTelefono(telefono)
+    public Cliente buscarPorTelefono(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
+            @PathVariable String telefono) {
+        return service.buscarPorTelefono(telefono, tallerId)
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado"));
     }
 
     @PutMapping("/{id}")
-    public Cliente actualizar(@PathVariable Long id,
-                              @Valid @RequestBody Cliente cliente) {
-        return service.actualizar(id, cliente);
+    public Cliente actualizar(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
+            @PathVariable Long id,
+            @Valid @RequestBody Cliente cliente) {
+        return service.actualizar(id, cliente, tallerId);
     }
 
     @DeleteMapping("/{id}")
     public void eliminar(@PathVariable Long id) {
         service.eliminar(id);
     }
-
 }

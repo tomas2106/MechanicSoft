@@ -7,16 +7,15 @@ import java.util.Optional;
 
 public interface ClienteService {
 
-    Cliente guardar(Cliente cliente);
+    Cliente guardar(Cliente cliente, Long tallerIdHeader);
 
-    List<Cliente> listar();
+    List<Cliente> listar(Long tallerIdHeader);
 
     Optional<Cliente> buscarPorId(Long id);
 
-    Optional<Cliente> buscarPorTelefono(String telefono);
+    Optional<Cliente> buscarPorTelefono(String telefono, Long tallerIdHeader);
 
-    Cliente actualizar(Long id, Cliente cliente);
+    Cliente actualizar(Long id, Cliente cliente, Long tallerIdHeader);
 
     void eliminar(Long id);
-
 }

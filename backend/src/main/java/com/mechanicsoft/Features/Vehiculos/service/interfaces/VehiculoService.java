@@ -8,19 +8,17 @@ import java.util.Optional;
 
 public interface VehiculoService {
 
-    Vehiculo guardar(VehiculoRequest request);
+    Vehiculo guardar(VehiculoRequest request, Long tallerIdHeader);
 
-    List<Vehiculo> listar();
+    List<Vehiculo> listar(Long tallerIdHeader);
 
     Optional<Vehiculo> buscarPorId(Long id);
 
-    Optional<Vehiculo> buscarPorPlaca(String placa);
+    Optional<Vehiculo> buscarPorPlaca(String placa, Long tallerIdHeader);
 
-    Vehiculo actualizar(Long id, VehiculoRequest request);
+    Vehiculo actualizar(Long id, VehiculoRequest request, Long tallerIdHeader);
 
     void eliminar(Long id);
 
     List<Vehiculo> buscarPorCliente(Long clienteId);
-
 }
-

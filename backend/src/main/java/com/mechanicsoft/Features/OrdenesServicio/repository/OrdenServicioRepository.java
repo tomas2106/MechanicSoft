@@ -10,9 +10,13 @@ public interface OrdenServicioRepository extends JpaRepository<OrdenServicio, Lo
 
     List<OrdenServicio> findByActivoTrue();
 
+    List<OrdenServicio> findByTallerIdAndActivoTrue(Long tallerId);
+
     List<OrdenServicio> findByVehiculoId(Long vehiculoId);
 
     List<OrdenServicio> findByEstado(EstadoOrden estado);
+
+    List<OrdenServicio> findByTallerIdAndEstadoAndActivoTrue(Long tallerId, EstadoOrden estado);
 
     List<OrdenServicio> findByVehiculoIdAndActivoTrue(Long vehiculoId);
 }

@@ -19,13 +19,16 @@ public class VehiculoController {
     }
 
     @PostMapping
-    public Vehiculo guardar(@Valid @RequestBody VehiculoRequest request) {
-        return service.guardar(request);
+    public Vehiculo guardar(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
+            @Valid @RequestBody VehiculoRequest request) {
+        return service.guardar(request, tallerId);
     }
 
     @GetMapping
-    public List<Vehiculo> listar() {
-        return service.listar();
+    public List<Vehiculo> listar(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId) {
+        return service.listar(tallerId);
     }
 
     @GetMapping("/{id}")
@@ -35,8 +38,10 @@ public class VehiculoController {
     }
 
     @GetMapping("/placa/{placa}")
-    public Vehiculo buscarPorPlaca(@PathVariable String placa) {
-        return service.buscarPorPlaca(placa)
+    public Vehiculo buscarPorPlaca(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
+            @PathVariable String placa) {
+        return service.buscarPorPlaca(placa, tallerId)
                 .orElseThrow(() -> new RuntimeException("Vehículo no encontrado."));
     }
 
@@ -46,14 +51,15 @@ public class VehiculoController {
     }
 
     @PutMapping("/{id}")
-    public Vehiculo actualizar(@PathVariable Long id,
-                               @Valid @RequestBody VehiculoRequest request) {
-        return service.actualizar(id, request);
+    public Vehiculo actualizar(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
+            @PathVariable Long id,
+            @Valid @RequestBody VehiculoRequest request) {
+        return service.actualizar(id, request, tallerId);
     }
 
     @DeleteMapping("/{id}")
     public void eliminar(@PathVariable Long id) {
         service.eliminar(id);
     }
-
 }

@@ -1,10 +1,19 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Bike, Users, Settings, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  PlusCircle,
+  Bike,
+  Users,
+  ShoppingCart,
+  Settings,
+  LogOut,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import "./Layout.css";
 
 export default function Layout() {
   const { user, taller, cerrarSesion } = useAuth();
+  const mostrarVentas = taller?.tieneInventario !== false;
 
   return (
     <div className="app-shell">
@@ -47,6 +56,11 @@ export default function Layout() {
         <NavLink to="/panel/clientes" className="nav-item">
           <Users size={17} /> Clientes
         </NavLink>
+        {mostrarVentas && (
+          <NavLink to="/panel/ventas" className="nav-item">
+            <ShoppingCart size={17} /> Ventas
+          </NavLink>
+        )}
         <NavLink to="/panel/configuracion" className="nav-item">
           <Settings size={17} /> Taller
         </NavLink>
@@ -69,10 +83,17 @@ export default function Layout() {
           <Bike size={20} />
           <span>Motos</span>
         </NavLink>
-        <NavLink to="/panel/clientes" className="mobile-nav-item">
-          <Users size={20} />
-          <span>Clientes</span>
-        </NavLink>
+        {mostrarVentas ? (
+          <NavLink to="/panel/ventas" className="mobile-nav-item">
+            <ShoppingCart size={20} />
+            <span>Ventas</span>
+          </NavLink>
+        ) : (
+          <NavLink to="/panel/clientes" className="mobile-nav-item">
+            <Users size={20} />
+            <span>Clientes</span>
+          </NavLink>
+        )}
         <NavLink to="/panel/configuracion" className="mobile-nav-item">
           <Settings size={20} />
           <span>Taller</span>

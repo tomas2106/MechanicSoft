@@ -40,11 +40,40 @@ public class Taller {
     @Column(nullable = false)
     private Boolean activo = true;
 
+    @Column(name = "tiene_inventario")
+    private Boolean tieneInventario = true;
+
+    @Column(name = "citas_habilitadas")
+    private Boolean citasHabilitadas = true;
+
+    @Column(name = "cupos_diarios")
+    private Integer cuposDiarios = 8;
+
+    @Column(name = "abierto_hoy")
+    private Boolean abiertoHoy = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     public void prePersist() {
-        createdAt = LocalDateTime.now();
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (activo == null) {
+            activo = true;
+        }
+        if (tieneInventario == null) {
+            tieneInventario = true;
+        }
+        if (citasHabilitadas == null) {
+            citasHabilitadas = true;
+        }
+        if (cuposDiarios == null) {
+            cuposDiarios = 8;
+        }
+        if (abiertoHoy == null) {
+            abiertoHoy = false;
+        }
     }
 }

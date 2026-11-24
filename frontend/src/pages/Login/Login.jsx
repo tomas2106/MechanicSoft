@@ -19,13 +19,27 @@ export default function Login() {
     setCargando(true);
 
     try {
-      const res = await api.post("/auth/login", { email, password });
-      iniciarSesion(res.data.usuario, res.data.token, res.data.taller);
+      const res = await api.post("/auth/login", {
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-      if (res.data.usuario.rol === "SUPER_ADMIN") {
-        navigate("/superadmin");
+      const usuario = res.data?.usuario;
+      const token = res.data?.token;
+      const taller = res.data?.taller || null;
+
+      if (!usuario || !usuario.rol) {
+        setError("Respuesta inesperada del servidor al iniciar sesión. Verifica que el backend esté actualizado.");
+        return;
+      }
+
+      iniciarSesion(usuario, token, taller);
+
+      const rolNormalizado = String(usuario.rol).toUpperCase();
+      if (rolNormalizado === "SUPER_ADMIN") {
+        navigate("/superadmin", { replace: true });
       } else {
-        navigate("/panel");
+        navigate("/panel", { replace: true });
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Credenciales incorrectas");

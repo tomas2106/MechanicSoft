@@ -1,310 +1,314 @@
 import { useEffect, useState } from "react";
-import { Copy, Check, Camera, Save, UserPlus, Trash2, ShieldAlert } from "lucide-react";
+import { Save, ExternalLink, Copy, Check, ImagePlus, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { compressImage } from "../../utils/imageCompressor";
+import { normalizarTelefonoCO, formatoVisibleCO } from "../../utils/phoneCO";
 import api from "../../services/api";
 
-export default function Configuracion() {
-  const { user, taller, actualizarTaller } = useAuth();
-  const esAdmin = user?.rol === "ADMIN_TALLER" || user?.rol === "SUPER_ADMIN";
-
-  const [nombre, setNombre] = useState(taller?.nombre || "");
-  const [ubicacion, setUbicacion] = useState(taller?.ubicacion || "");
-  const [whatsapp, setWhatsapp] = useState(taller?.whatsapp || "");
-  const [logoUrl, setLogoUrl] = useState(taller?.logoUrl || "");
-  const [copiado, setCopiado] = useState(false);
-  const [guardado, setGuardado] = useState(false);
-
-  const [equipo, setEquipo] = useState([]);
-  const [nuevoMiembro, setNuevoMiembro] = useState({
-    nombre: "",
-    email: "",
-    password: "",
-    rol: "MECANICO",
+const comprimirLogoTaller = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new Image();
+      img.onload = () => {
+        const maxSide = 480;
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.84));
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 
-  const cargarEquipo = async () => {
-    if (!taller?.id || !esAdmin) return;
-    try {
-      const res = await api.get(`/talleres/${taller.id}/equipo`);
-      setEquipo(Array.isArray(res.data) ? res.data : []);
-    } catch {}
-  };
+export default function Configuracion() {
+  const { taller, actualizarTaller } = useAuth();
+  const [form, setForm] = useState({
+    nombre: "",
+    slug: "",
+    ubicacion: "",
+    whatsapp: "",
+    logoUrl: "",
+    citasHabilitadas: true,
+    cuposDiarios: 8,
+  });
+  const [guardando, setGuardando] = useState(false);
+  const [mensaje, setMensaje] = useState("");
+  const [copiado, setCopiado] = useState(false);
 
   useEffect(() => {
-    cargarEquipo();
-  }, [taller?.id, esAdmin]);
+    if (taller) {
+      setForm({
+        nombre: taller.nombre || "",
+        slug: taller.slug || "",
+        ubicacion: taller.ubicacion || "",
+        whatsapp: taller.whatsapp || "",
+        logoUrl: taller.logoUrl || "",
+        citasHabilitadas: taller.citasHabilitadas !== false,
+        cuposDiarios: taller.cuposDiarios ?? 8,
+      });
+    }
+  }, [taller]);
 
-  const slug =
-    nombre
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "") || "mi-taller";
-
-  const enlacePublico = `${window.location.origin}/t/${slug}`;
-
-  const handleLogo = async (e) => {
-    if (!esAdmin) return;
+  const handleSeleccionarFoto = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const comprimida = await compressImage(file, { maxWidth: 400, quality: 0.8 });
-    const reader = new FileReader();
-    reader.onloadend = () => setLogoUrl(reader.result);
-    reader.readAsDataURL(comprimida);
-  };
-
-  const handleGuardar = async (e) => {
-    e.preventDefault();
-    if (!esAdmin) return;
     try {
-      if (taller?.id) {
-        await api.put(`/talleres/${taller.id}`, {
-          nombre,
-          slug,
-          ubicacion,
-          whatsapp,
-          logoUrl,
-        });
-      }
-      actualizarTaller({ nombre, slug, ubicacion, whatsapp, logoUrl });
-      setGuardado(true);
-      setTimeout(() => setGuardado(false), 2500);
-    } catch (err) {
-      alert("Error al guardar perfil: " + err.message);
+      const dataUrl = await comprimirLogoTaller(file);
+      setForm((prev) => ({ ...prev, logoUrl: dataUrl }));
+    } catch {
+      alert("No se pudo procesar la imagen seleccionada.");
     }
   };
 
-  const agregarTrabajador = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!esAdmin) return;
+    setGuardando(true);
+    setMensaje("");
+
     try {
-      await api.post(`/talleres/${taller.id}/equipo`, {
-        ...nuevoMiembro,
-        esMecanico: true,
-      });
-      setNuevoMiembro({ nombre: "", email: "", password: "", rol: "MECANICO" });
-      cargarEquipo();
+      const whatsappNormalizado = normalizarTelefonoCO(form.whatsapp);
+      const payload = {
+        ...form,
+        whatsapp: whatsappNormalizado,
+        cuposDiarios: Number(form.cuposDiarios) || 8,
+      };
+      const res = await api.put(`/talleres/${taller.id}`, payload);
+      actualizarTaller(res.data || payload);
+      setForm((prev) => ({ ...prev, whatsapp: whatsappNormalizado }));
+      setMensaje("Perfil y foto del taller guardados correctamente.");
     } catch (err) {
-      alert(err.response?.data?.message || "No se pudo agregar al trabajador");
+      setMensaje(err.response?.data?.message || err.message || "Error al guardar configuración.");
+    } finally {
+      setGuardando(false);
     }
   };
 
-  const quitarTrabajador = async (id) => {
-    if (!esAdmin) return;
-    await api.delete(`/talleres/equipo/${id}`);
-    cargarEquipo();
-  };
+  const urlPortal = `${window.location.origin}/t/${form.slug || "general"}`;
 
   const copiarEnlace = () => {
-    navigator.clipboard.writeText(enlacePublico);
+    navigator.clipboard.writeText(urlPortal);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
   };
 
   return (
-    <div style={{ maxWidth: 680, margin: "0 auto", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 760 }}>
       <div>
         <h2 style={{ fontSize: "1.25rem", fontWeight: 800 }}>Configuración del Taller</h2>
         <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem" }}>
-          Identidad comercial, enlace para clientes y equipo de trabajo
+          Administra la foto del taller, los datos públicos, el WhatsApp (+57) y la agenda de citas
         </p>
       </div>
 
-      {!esAdmin && (
+      {mensaje && (
         <div
-          className="card"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.65rem",
-            backgroundColor: "var(--bg-subtle)",
-            fontSize: "0.86rem",
-            color: "var(--text-secondary)",
+            backgroundColor: "var(--primary-soft)",
+            border: "1px solid var(--accent-brand)",
+            color: "var(--accent-brand)",
+            padding: "0.75rem 1rem",
+            borderRadius: "var(--radius-md)",
+            fontSize: "0.88rem",
+            fontWeight: 600,
           }}
         >
-          <ShieldAlert size={18} color="var(--accent-brand)" />
-          <span>
-            Estás conectado con perfil de <strong>Mecánico</strong>. Solo el administrador puede
-            modificar el nombre, logo o equipo del taller.
-          </span>
+          {mensaje}
         </div>
       )}
 
+      {/* Foto o Logo del Taller */}
       <div className="card">
-        <label style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--text-secondary)" }}>
-          Enlace directo para compartir con tus clientes
-        </label>
-        <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.45rem" }}>
-          <input className="input-field" value={enlacePublico} readOnly />
-          <button type="button" onClick={copiarEnlace} className="btn-secondary">
-            {copiado ? <Check size={17} color="#166534" /> : <Copy size={17} />}
-            {copiado ? "Copiado" : "Copiar"}
-          </button>
+        <h3 className="section-title">Foto o Logotipo del Taller</h3>
+        <p style={{ fontSize: "0.84rem", color: "var(--text-secondary)", marginBottom: "0.9rem" }}>
+          Esta imagen aparecerá en el portal público cuando tus clientes consulten su moto o agenden cita.
+        </p>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "1.1rem", flexWrap: "wrap", marginBottom: "0.9rem" }}>
+          {form.logoUrl ? (
+            <img
+              src={form.logoUrl}
+              alt={form.nombre || "Logo del taller"}
+              style={{
+                width: 84,
+                height: 84,
+                borderRadius: 14,
+                objectFit: "cover",
+                border: "2px solid var(--accent-brand)",
+                backgroundColor: "var(--bg-app)",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 84,
+                height: 84,
+                borderRadius: 14,
+                backgroundColor: "var(--accent-brand)",
+                color: "#ffffff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: "2rem",
+                fontWeight: 900,
+              }}
+            >
+              {(form.nombre || "T").charAt(0).toUpperCase()}
+            </div>
+          )}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            <label
+              className="btn-secondary"
+              style={{ cursor: "pointer", width: "fit-content" }}
+            >
+              <ImagePlus size={16} /> Subir foto desde dispositivo
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleSeleccionarFoto}
+                style={{ display: "none" }}
+              />
+            </label>
+
+            {form.logoUrl && (
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, logoUrl: "" })}
+                className="btn-secondary"
+                style={{ color: "var(--danger)", width: "fit-content", fontSize: "0.8rem" }}
+              >
+                <Trash2 size={14} /> Quitar foto
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="form-group" style={{ marginBottom: 0 }}>
+          <label>O pega una URL de imagen (opcional)</label>
+          <input
+            className="input-field"
+            placeholder="https://..."
+            value={form.logoUrl}
+            onChange={(e) => setForm({ ...form, logoUrl: e.target.value })}
+          />
         </div>
       </div>
 
-      <form onSubmit={handleGuardar} className="card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-        <h3 className="section-title">Perfil Público del Taller</h3>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt="Logo"
-              style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover", border: "1px solid var(--border-color)" }}
-            />
-          ) : (
-            <div className="taller-logo-lg" style={{ backgroundColor: "var(--accent-brand)" }}>
-              {(nombre || "M").charAt(0).toUpperCase()}
-            </div>
-          )}
-
-          {esAdmin && (
-            <label className="btn-secondary">
-              <Camera size={16} /> Cambiar logo
-              <input type="file" accept="image/*" onChange={handleLogo} hidden />
-            </label>
-          )}
-        </div>
-
-        <div className="form-group">
-          <label>Nombre comercial del taller</label>
-          <input
-            className="input-field"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            disabled={!esAdmin}
-            required
-          />
-        </div>
+      {/* Datos Generales */}
+      <div className="card">
+        <h3 className="section-title">Datos Generales y Contacto</h3>
 
         <div className="form-grid-2">
           <div className="form-group">
-            <label>WhatsApp del taller (ej: 573001234567)</label>
+            <label>Nombre del taller *</label>
             <input
               className="input-field"
-              value={whatsapp}
-              onChange={(e) => setWhatsapp(e.target.value)}
-              disabled={!esAdmin}
+              value={form.nombre}
+              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              required
             />
           </div>
 
           <div className="form-group">
-            <label>Dirección o ubicación</label>
+            <label>Identificador de enlace (slug) *</label>
             <input
               className="input-field"
-              placeholder="Ej: Cra 10 # 25-30, Soacha"
-              value={ubicacion}
-              onChange={(e) => setUbicacion(e.target.value)}
-              disabled={!esAdmin}
+              value={form.slug}
+              onChange={(e) => setForm({ ...form, slug: e.target.value })}
+              required
             />
           </div>
-        </div>
 
-        {esAdmin && (
-          <button type="submit" className="btn-primary">
-            <Save size={17} /> {guardado ? "¡Cambios guardados!" : "Guardar perfil del taller"}
+          <div className="form-group">
+            <label>Ciudad / Ubicación</label>
+            <input
+              className="input-field"
+              placeholder="Ej: Soacha, Cundinamarca"
+              value={form.ubicacion}
+              onChange={(e) => setForm({ ...form, ubicacion: e.target.value })}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>WhatsApp Colombia (se guarda con +57)</label>
+            <input
+              className="input-field"
+              placeholder="Ej: 3001234567"
+              value={form.whatsapp}
+              onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
+            />
+            {form.whatsapp && (
+              <span style={{ fontSize: "0.76rem", color: "var(--accent-brand)", fontWeight: 600 }}>
+                Número registrado: {formatoVisibleCO(form.whatsapp)}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Citas y Disponibilidad */}
+      <div className="card">
+        <h3 className="section-title">Citas y Disponibilidad de Clientes</h3>
+
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.55rem",
+            fontSize: "0.9rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            marginBottom: "0.9rem",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={form.citasHabilitadas}
+            onChange={(e) => setForm({ ...form, citasHabilitadas: e.target.checked })}
+          />
+          Habilitar que los clientes saquen cita y consulten disponibilidad
+        </label>
+
+        <div className="form-group" style={{ maxWidth: 260, marginBottom: 0 }}>
+          <label>Cupos diarios disponibles por defecto</label>
+          <input
+            type="number"
+            min="1"
+            max="100"
+            className="input-field"
+            value={form.cuposDiarios}
+            onChange={(e) => setForm({ ...form, cuposDiarios: e.target.value })}
+          />
+        </div>
+      </div>
+
+      {/* Enlace Público */}
+      <div className="card">
+        <h3 className="section-title">Enlace Público del Taller</h3>
+        <p style={{ fontSize: "0.84rem", color: "var(--text-secondary)", marginBottom: "0.75rem" }}>
+          Comparte este enlace con tus clientes para que vean la información de tu taller, consulten su placa o agenden cita.
+        </p>
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "center" }}>
+          <input className="input-field" style={{ flex: 1, minWidth: 220 }} value={urlPortal} readOnly />
+          <button type="button" onClick={copiarEnlace} className="btn-secondary">
+            {copiado ? <Check size={16} /> : <Copy size={16} />}
+            {copiado ? "Copiado" : "Copiar"}
           </button>
-        )}
-      </form>
-
-      {/* Sección Equipo de Trabajo (Exclusiva para el Dueño / Admin del Taller) */}
-      {esAdmin && (
-        <div className="card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div>
-            <h3 className="section-title" style={{ marginBottom: "0.25rem" }}>
-              Equipo y Mecánicos del Taller
-            </h3>
-            <p style={{ fontSize: "0.84rem", color: "var(--text-secondary)" }}>
-              Crea accesos para tus mecánicos o administradores. Como administrador también puedes
-              operar motos en el tablero.
-            </p>
-          </div>
-
-          <form onSubmit={agregarTrabajador} className="form-grid-2">
-            <input
-              className="input-field"
-              placeholder="Nombre del trabajador *"
-              value={nuevoMiembro.nombre}
-              onChange={(e) => setNuevoMiembro({ ...nuevoMiembro, nombre: e.target.value })}
-              required
-            />
-            <select
-              className="input-field"
-              value={nuevoMiembro.rol}
-              onChange={(e) => setNuevoMiembro({ ...nuevoMiembro, rol: e.target.value })}
-            >
-              <option value="MECANICO">Mecánico (Operativo)</option>
-              <option value="ADMIN_TALLER">Administrador (Total)</option>
-            </select>
-            <input
-              type="email"
-              className="input-field"
-              placeholder="Correo de acceso *"
-              value={nuevoMiembro.email}
-              onChange={(e) => setNuevoMiembro({ ...nuevoMiembro, email: e.target.value })}
-              required
-            />
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <input
-                type="text"
-                className="input-field"
-                placeholder="Contraseña *"
-                value={nuevoMiembro.password}
-                onChange={(e) => setNuevoMiembro({ ...nuevoMiembro, password: e.target.value })}
-                required
-              />
-              <button type="submit" className="btn-primary" title="Agregar trabajador">
-                <UserPlus size={17} />
-              </button>
-            </div>
-          </form>
-
-          {equipo.length > 0 && (
-            <div
-              style={{
-                borderTop: "1px solid var(--border-color)",
-                paddingTop: "0.75rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-              }}
-            >
-              {equipo.map((m) => (
-                <div
-                  key={m.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0.6rem 0.75rem",
-                    backgroundColor: "var(--bg-app)",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <div>
-                    <strong style={{ fontSize: "0.9rem" }}>{m.nombre}</strong>
-                    <span style={{ display: "block", fontSize: "0.78rem", color: "var(--text-secondary)" }}>
-                      {m.email} • {m.rol === "ADMIN_TALLER" ? "Dueño / Admin" : "Mecánico"}
-                    </span>
-                  </div>
-                  {m.id !== user?.id && (
-                    <button
-                      onClick={() => quitarTrabajador(m.id)}
-                      className="icon-btn"
-                      style={{ color: "var(--danger)" }}
-                      title="Quitar acceso"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <a href={urlPortal} target="_blank" rel="noreferrer" className="btn-secondary" style={{ textDecoration: "none" }}>
+            <ExternalLink size={16} /> Ver vista cliente
+          </a>
         </div>
-      )}
-    </div>
+      </div>
+
+      <button type="submit" className="btn-accent" disabled={guardando} style={{ width: "fit-content" }}>
+        <Save size={17} /> {guardando ? "Guardando..." : "Guardar configuración"}
+      </button>
+    </form>
   );
 }

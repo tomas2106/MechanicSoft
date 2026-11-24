@@ -63,7 +63,7 @@
       rgba(9, 9, 11, 0.8) 55%,
       rgba(15, 118, 110, 0.35) 100%
     ),
-    url("../../assets/taller-bg.jpg");
+    url("../../assets/taller-bg.png");
   background-size: cover;
   background-position: center;
   padding: 4.25rem 1.5rem;

@@ -7,7 +7,6 @@
   --text-secondary: #52525b;
   --text-muted: #71717a;
 
-  /* Acento Esmeralda Técnico */
   --primary: #18181b;
   --primary-text: #ffffff;
   --primary-hover: #27272a;
@@ -15,7 +14,6 @@
   --accent-brand: #0f766e;
   --accent-brand-hover: #115e59;
 
-  /* Semáforo de estados */
   --status-recibido-bg: #e4e4e7;
   --status-recibido-text: #3f3f46;
   --status-diagnostico-bg: #fef3c7;
@@ -34,37 +32,6 @@
   --radius-lg: 12px;
 }
 
-[data-theme="dark"] {
-  --bg-app: #09090b;
-  --bg-surface: #121215;
-  --bg-subtle: #1c1c21;
-  --border-color: #27272a;
-  --text-primary: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
-
-  --primary: #f4f4f5;
-  --primary-text: #09090b;
-  --primary-hover: #e4e4e7;
-  --primary-soft: rgba(20, 184, 166, 0.12);
-  --accent-brand: #14b8a6;
-  --accent-brand-hover: #0d9488;
-
-  --status-recibido-bg: #27272a;
-  --status-recibido-text: #d4d4d8;
-  --status-diagnostico-bg: rgba(217, 119, 6, 0.16);
-  --status-diagnostico-text: #fbbf24;
-  --status-reparacion-bg: rgba(20, 184, 166, 0.16);
-  --status-reparacion-text: #2dd4bf;
-  --status-listo-bg: rgba(22, 163, 74, 0.16);
-  --status-listo-text: #4ade80;
-  --status-entregado-bg: #18181b;
-  --status-entregado-text: #71717a;
-
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.45);
-  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.55);
-}
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -73,16 +40,16 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
 }
 
-/* Evita que la barra superior tape los títulos al navegar por anclas */
 section[id],
 div[id] {
   scroll-margin-top: 84px;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg-app);
   color: var(--text-primary);
   line-height: 1.5;
@@ -94,28 +61,33 @@ input,
 select,
 textarea {
   font-family: inherit;
-  font-size: 0.94rem;
+  font-size: 0.93rem;
 }
 
-/* Tarjetas y Contenedores */
 .card {
   background-color: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
-  padding: 1.4rem;
+  padding: 1.35rem;
 }
 
-/* Inputs, Selects y Formularios Modernos */
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  color: var(--text-primary);
+}
+
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.38rem;
   margin-bottom: 0.85rem;
 }
 
 .form-group label {
-  font-size: 0.83rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
 }
@@ -128,8 +100,8 @@ textarea {
 
 .input-field {
   width: 100%;
-  min-height: 44px;
-  padding: 0.65rem 0.85rem;
+  min-height: 42px;
+  padding: 0.6rem 0.8rem;
   background-color: var(--bg-surface);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
@@ -138,13 +110,9 @@ textarea {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.input-field::placeholder {
-  color: var(--text-muted);
-}
-
 .input-field:focus {
   border-color: var(--accent-brand);
-  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
 }
 
 .input-field:disabled {
@@ -154,28 +122,22 @@ textarea {
 }
 
 textarea.input-field {
-  min-height: 84px;
+  min-height: 78px;
   resize: vertical;
 }
 
-/* Botones */
 .btn-primary {
   background-color: var(--primary);
   color: var(--primary-text);
   border: 1px solid var(--primary);
   border-radius: var(--radius-md);
-  padding: 0.65rem 1.15rem;
+  padding: 0.62rem 1.1rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.15s ease;
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-hover);
+  gap: 0.45rem;
 }
 
 .btn-accent {
@@ -183,14 +145,13 @@ textarea.input-field {
   color: #ffffff;
   border: 1px solid var(--accent-brand);
   border-radius: var(--radius-md);
-  padding: 0.7rem 1.2rem;
+  padding: 0.65rem 1.15rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.15s ease;
+  gap: 0.45rem;
 }
 
 .btn-accent:hover {
@@ -202,18 +163,18 @@ textarea.input-field {
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 0.6rem 1rem;
+  padding: 0.58rem 0.95rem;
   font-weight: 500;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .icon-btn {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   background-color: var(--bg-surface);
@@ -222,36 +183,73 @@ textarea.input-field {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s ease;
 }
 
-.icon-btn:hover {
-  background-color: var(--bg-subtle);
-}
-
-/* Firma de Marca Tipográfica (Sin recuadro MS) */
 .brand-wordmark {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 900;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.5px;
   text-transform: uppercase;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
 }
 
 .brand-wordmark span {
   color: var(--accent-brand);
 }
 
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  background-color: var(--bg-app);
+}
+
+.placa-badge {
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.8px;
+  display: inline-block;
+}
+
+.status-pill {
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-RECIBIDO { background: var(--status-recibido-bg); color: var(--status-recibido-text); }
+.status-DIAGNOSTICO { background: var(--status-diagnostico-bg); color: var(--status-diagnostico-text); }
+.status-EN_REPARACION { background: var(--status-reparacion-bg); color: var(--status-reparacion-text); }
+.status-LISTO_PARA_ENTREGA { background: var(--status-listo-bg); color: var(--status-listo-text); }
+.status-ENTREGADO { background: var(--status-entregado-bg); color: var(--status-entregado-text); }
+
 .error-banner {
-  background-color: rgba(185, 28, 28, 0.1);
-  border: 1px solid rgba(185, 28, 28, 0.35);
+  background-color: rgba(185, 28, 28, 0.08);
+  border: 1px solid rgba(185, 28, 28, 0.3);
   color: var(--danger);
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
   font-size: 0.88rem;
-  font-weight: 500;
   margin-bottom: 1rem;
 }
 

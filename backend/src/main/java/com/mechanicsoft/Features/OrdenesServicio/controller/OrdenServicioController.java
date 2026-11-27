@@ -1,5 +1,7 @@
 package com.mechanicsoft.Features.OrdenesServicio.controller;
 
+import com.mechanicsoft.Features.OrdenesServicio.dto.IngresoCompletoRequest;
+import com.mechanicsoft.Features.OrdenesServicio.dto.OrdenResumenDTO;
 import com.mechanicsoft.Features.OrdenesServicio.dto.OrdenServicioRequest;
 import com.mechanicsoft.Features.OrdenesServicio.entity.EstadoOrden;
 import com.mechanicsoft.Features.OrdenesServicio.entity.OrdenServicio;
@@ -17,6 +19,19 @@ public class OrdenServicioController {
 
     public OrdenServicioController(OrdenServicioService service) {
         this.service = service;
+    }
+
+    @PostMapping("/ingreso-completo")
+    public OrdenResumenDTO registrarIngresoCompleto(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
+            @Valid @RequestBody IngresoCompletoRequest request) {
+        return service.registrarIngresoCompleto(request, tallerId);
+    }
+
+    @GetMapping("/resumen")
+    public List<OrdenResumenDTO> listarResumen(
+            @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId) {
+        return service.listarResumen(tallerId);
     }
 
     @PostMapping

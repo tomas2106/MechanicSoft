@@ -3,9 +3,7 @@ package com.mechanicsoft.Features.OrdenesServicio.entity;
 import com.mechanicsoft.Features.Talleres.entity.Taller;
 import com.mechanicsoft.Features.Vehiculos.entity.Vehiculo;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -37,10 +35,8 @@ public class OrdenServicio {
     @JoinColumn(name = "taller_id")
     private Taller taller;
 
-    @NotNull(message = "El kilometraje es obligatorio")
-    @Min(value = 0, message = "El kilometraje no puede ser negativo")
     @Column(name = "kilometraje_ingreso", nullable = false)
-    private Integer kilometrajeIngreso;
+    private Integer kilometrajeIngreso = 0;
 
     @NotBlank(message = "El motivo de ingreso es obligatorio")
     @Column(name = "motivo_ingreso", nullable = false, length = 500)
@@ -77,13 +73,23 @@ public class OrdenServicio {
     @Column(name = "fecha_entrega")
     private LocalDateTime fechaEntrega;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
     @Column(nullable = false)
     private Boolean activo = true;
 
     @PrePersist
     public void prePersist() {
+        LocalDateTime ahora = LocalDateTime.now(ZONA_COLOMBIA);
         if (this.fechaIngreso == null) {
-            this.fechaIngreso = LocalDateTime.now(ZONA_COLOMBIA);
+            this.fechaIngreso = ahora;
+        }
+        if (this.createdAt == null) {
+            this.createdAt = ahora;
+        }
+        if (this.kilometrajeIngreso == null || this.kilometrajeIngreso < 0) {
+            this.kilometrajeIngreso = 0;
         }
         if (this.estado == null) {
             this.estado = EstadoOrden.RECIBIDO;

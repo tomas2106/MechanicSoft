@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -243,7 +242,6 @@ public class TallerController {
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // Cambiar contraseña del administrador del taller (y mantener sincronizada para SuperAdmin)
     @PatchMapping("/talleres/{id}/password")
     public ResponseEntity actualizarPasswordTaller(@PathVariable Long id, @RequestBody Map body) {
         String nuevaPassword = body.get("password") != null ? String.valueOf(body.get("password")).trim() : "";
@@ -406,8 +404,8 @@ public class TallerController {
             return ResponseEntity.badRequest().body(Map.of("message", "Ingresa una placa o teléfono"));
         }
 
-        String query = q.trim().toUpperCase().replaceAll("\\s+", "");
-        String telQuery = q.trim().replaceAll("\\D+", "");
+        String placaExacta = q.trim().toUpperCase().replaceAll("\\s+", "");
+        String telDigitos = q.trim().replaceAll("\\D+", "");
 
         boolean filtrarPorTallerEspecifico = taller != null
                 && !taller.isBlank()
@@ -422,61 +420,35 @@ public class TallerController {
             tallerSolicitado = (Taller) optTaller.get();
         }
 
-        List coincidencias = new ArrayList();
-        for (Object obj : ordenRepository.findAll()) {
-            OrdenServicio o = (OrdenServicio) obj;
-            if (o == null || Boolean.FALSE.equals(o.getActivo()) || o.getVehiculo() == null) {
+        // Consulta optimizada en PostgreSQL (trae solo coincidencias ya ordenadas por id DESC)
+        List<OrdenServicio> candidatas = ordenRepository.buscarCoincidenciasPublicas(placaExacta, telDigitos);
+        List<OrdenServicio> coincidencias = new ArrayList<>();
+
+        for (OrdenServicio o : candidatas) {
+            if (o == null || o.getVehiculo() == null) {
                 continue;
             }
-
-            Taller tallerDeLaOrden = o.getTaller();
-            if (tallerDeLaOrden == null && o.getVehiculo().getTaller() != null) {
-                tallerDeLaOrden = o.getVehiculo().getTaller();
-            }
-
+            Taller tallerDeLaOrden = o.getTaller() != null ? o.getTaller() : o.getVehiculo().getTaller();
             if (filtrarPorTallerEspecifico) {
                 if (tallerDeLaOrden == null || !tallerDeLaOrden.getId().equals(tallerSolicitado.getId())) {
                     continue;
                 }
             }
-
-            String placa = o.getVehiculo().getPlaca() != null
-                    ? o.getVehiculo().getPlaca().replaceAll("\\s+", "").toUpperCase()
-                    : "";
-            String tel = (o.getVehiculo().getCliente() != null && o.getVehiculo().getCliente().getTelefono() != null)
-                    ? o.getVehiculo().getCliente().getTelefono().replaceAll("\\D+", "")
-                    : "";
-            boolean matchPlaca = !placa.isEmpty() && placa.equals(query);
-            boolean matchTel = !telQuery.isEmpty() && !tel.isEmpty() && tel.contains(telQuery);
-            if (matchPlaca || matchTel) {
-                coincidencias.add(o);
-            }
+            coincidencias.add(o);
         }
 
         if (coincidencias.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        coincidencias.sort(new Comparator() {
-            @Override
-            public int compare(Object a, Object b) {
-                OrdenServicio oa = (OrdenServicio) a;
-                OrdenServicio ob = (OrdenServicio) b;
-                long idA = oa.getId() != null ? oa.getId() : 0L;
-                long idB = ob.getId() != null ? ob.getId() : 0L;
-                return Long.compare(idB, idA);
-            }
-        });
-
-        OrdenServicio actual = (OrdenServicio) coincidencias.get(0);
+        OrdenServicio actual = coincidencias.get(0);
 
         Taller tallerReal = actual.getTaller() != null
                 ? actual.getTaller()
                 : (actual.getVehiculo().getTaller() != null ? actual.getVehiculo().getTaller() : tallerSolicitado);
 
-        List historialMismoTaller = new ArrayList();
-        for (Object obj : coincidencias) {
-            OrdenServicio o = (OrdenServicio) obj;
+        List<OrdenServicio> historialMismoTaller = new ArrayList<>();
+        for (OrdenServicio o : coincidencias) {
             Taller tOrd = o.getTaller() != null ? o.getTaller() : o.getVehiculo().getTaller();
             if (tallerReal == null || (tOrd != null && tOrd.getId().equals(tallerReal.getId()))) {
                 historialMismoTaller.add(o);
@@ -506,8 +478,7 @@ public class TallerController {
         dto.put("tecnicoNombre", obtenerTecnicoPrincipal(tallerReal != null ? tallerReal.getId() : null, tallerReal));
 
         List historial = new ArrayList();
-        for (Object obj : historialMismoTaller) {
-            OrdenServicio o = (OrdenServicio) obj;
+        for (OrdenServicio o : historialMismoTaller) {
             Map item = new HashMap();
             item.put("id", o.getId());
             item.put("fechaIngreso", o.getFechaIngreso());

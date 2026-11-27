@@ -2,20 +2,42 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, CheckCircle2, UserCheck, Bike, Plus } from "lucide-react";
 import api from "../../services/api";
-import { ordenService } from "../../services/ordenService";
+import { useAuth } from "../../context/AuthContext";
 import { compressImage } from "../../utils/imageCompressor";
 import "../Publico/HomePage.css";
 import "./Recepcion.css";
 
+const obtenerTallerKeyInicial = (taller) => {
+  if (taller?.id) return String(taller.id);
+  const storedId = localStorage.getItem("ms_taller_id");
+  if (storedId) return String(storedId);
+  try {
+    const parsed = JSON.parse(localStorage.getItem("ms_taller") || "null");
+    if (parsed?.id) return String(parsed.id);
+  } catch {
+    // Ignorar
+  }
+  return "default";
+};
+
 export default function Recepcion() {
   const navigate = useNavigate();
+  const { taller } = useAuth();
+  const tallerKey = obtenerTallerKeyInicial(taller);
+
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [previewFoto, setPreviewFoto] = useState("");
   const [infoCompresion, setInfoCompresion] = useState("");
 
-  // Clientes y motos existentes
-  const [clientesExistentes, setClientesExistentes] = useState([]);
+  const [clientesExistentes, setClientesExistentes] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`ms_clientes_${tallerKey}`);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [busquedaCliente, setBusquedaCliente] = useState("");
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   const [motosDelCliente, setMotosDelCliente] = useState([]);
@@ -28,8 +50,8 @@ export default function Recepcion() {
     placa: "",
     marca: "",
     modelo: "",
-    cilindrajeCc: "150",
-    kilometraje: "0",
+    cilindrajeCc: "",
+    kilometraje: "",
     motivoIngreso: "",
     valorTotal: "",
     fotoVehiculo: "",
@@ -38,9 +60,14 @@ export default function Recepcion() {
   useEffect(() => {
     api
       .get("/clientes")
-      .then((res) => setClientesExistentes(Array.isArray(res.data) ? res.data : []))
+      .then((res) => {
+        if (Array.isArray(res.data)) {
+          setClientesExistentes(res.data);
+          localStorage.setItem(`ms_clientes_${tallerKey}`, JSON.stringify(res.data));
+        }
+      })
       .catch(() => {});
-  }, []);
+  }, [tallerKey]);
 
   const seleccionarClienteExistente = async (cliente) => {
     setClienteSeleccionado(cliente);
@@ -49,13 +76,13 @@ export default function Recepcion() {
     setForm((prev) => ({
       ...prev,
       clienteNombre: cliente.nombre || "",
-      clienteTelefono: cliente.telefono || "",
+      clienteTelefono: (cliente.telefono || "").replace(/^57/, ""),
       clienteCorreo: cliente.correo || "",
       placa: "",
       marca: "",
       modelo: "",
-      cilindrajeCc: "150",
-      kilometraje: "0",
+      cilindrajeCc: "",
+      kilometraje: "",
     }));
 
     try {
@@ -77,8 +104,8 @@ export default function Recepcion() {
       placa: moto.placa || "",
       marca: moto.marca || "",
       modelo: moto.modelo || "",
-      cilindrajeCc: String(moto.cilindrajeCc || 150),
-      kilometraje: String(moto.kilometraje || 0),
+      cilindrajeCc: moto.cilindrajeCc ? String(moto.cilindrajeCc) : "",
+      kilometraje: moto.kilometraje ? String(moto.kilometraje) : "",
     }));
   };
 
@@ -94,8 +121,8 @@ export default function Recepcion() {
       placa: "",
       marca: "",
       modelo: "",
-      cilindrajeCc: "150",
-      kilometraje: "0",
+      cilindrajeCc: "",
+      kilometraje: "",
     }));
   };
 
@@ -113,7 +140,7 @@ export default function Recepcion() {
 
     try {
       const originalKB = Math.round(file.size / 1024);
-      const comprimida = await compressImage(file, { maxWidth: 1024, quality: 0.78 });
+      const comprimida = await compressImage(file, { maxWidth: 600, quality: 0.65 });
       const finalKB = Math.round(comprimida.size / 1024);
       setInfoCompresion(`Optimizada: ${originalKB} KB → ${finalKB} KB`);
 
@@ -128,61 +155,135 @@ export default function Recepcion() {
     }
   };
 
+  const actualizarCachesLocales = (clienteObj, motoObj) => {
+    try {
+      // 1. Actualizar caché de clientes
+      if (clienteObj?.id) {
+        const prevClientes = JSON.parse(localStorage.getItem(`ms_clientes_${tallerKey}`) || "[]");
+        const existeC = prevClientes.some((c) => c.id === clienteObj.id);
+        const nuevosClientes = existeC
+          ? prevClientes.map((c) => (c.id === clienteObj.id ? { ...c, ...clienteObj } : c))
+          : [clienteObj, ...prevClientes];
+        localStorage.setItem(`ms_clientes_${tallerKey}`, JSON.stringify(nuevosClientes));
+      }
+
+      // 2. Actualizar mapa de motos por cliente
+      if (clienteObj?.id && motoObj?.placa) {
+        const prevMapa = JSON.parse(localStorage.getItem(`ms_clientes_motos_${tallerKey}`) || "{}");
+        const keyC = String(clienteObj.id);
+        const actuales = Array.isArray(prevMapa[keyC]) ? prevMapa[keyC] : [];
+        const yaEsta = actuales.some((m) => m.placa?.toUpperCase() === motoObj.placa.toUpperCase());
+        if (!yaEsta) {
+          prevMapa[keyC] = [...actuales, motoObj];
+          localStorage.setItem(`ms_clientes_motos_${tallerKey}`, JSON.stringify(prevMapa));
+        }
+      }
+
+      // 3. Actualizar caché de motos
+      if (motoObj?.placa) {
+        const prevMotos = JSON.parse(localStorage.getItem(`ms_motos_${tallerKey}`) || "[]");
+        const filtradas = prevMotos.filter((m) => m.placa?.toUpperCase() !== motoObj.placa.toUpperCase());
+        localStorage.setItem(
+          `ms_motos_${tallerKey}`,
+          JSON.stringify([{ ...motoObj, cliente: clienteObj }, ...filtradas])
+        );
+      }
+    } catch {
+      // Ignorar si localStorage está lleno
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setGuardando(true);
     setError("");
 
     try {
-      // 1. Obtener o crear cliente
-      let clienteId = clienteSeleccionado?.id;
-      if (!clienteId) {
-        try {
-          const resExistente = await api.get(`/clientes/telefono/${form.clienteTelefono.trim()}`);
-          clienteId = resExistente.data.id;
-        } catch {
+      const placaLimpia = form.placa.replace(/\s+/g, "").toUpperCase();
+      const kmActual = Number(form.kilometraje) || 0;
+      let vehiculoIdFinal = vehiculoSeleccionadoId;
+      let clienteFinal = clienteSeleccionado;
+
+      try {
+        // Intento 1: endpoint unificado (crea/asocia cliente + moto + orden en una transacción)
+        const resOrden = await api.post("/ordenes-servicio/ingreso-completo", {
+          nombreCliente: form.clienteNombre.trim(),
+          telefono: form.clienteTelefono.trim(),
+          correo: form.clienteCorreo.trim() || null,
+          placa: placaLimpia,
+          marca: form.marca.trim(),
+          modelo: form.modelo.trim(),
+          cilindrajeCc: form.cilindrajeCc ? Number(form.cilindrajeCc) : 150,
+          kilometraje: kmActual,
+          motivoIngreso: form.motivoIngreso.trim(),
+          valorTotal: form.valorTotal ? Number(form.valorTotal) : 0,
+        });
+
+        const data = resOrden.data || {};
+        vehiculoIdFinal = data.vehiculo?.id || data.vehiculoId || vehiculoSeleccionadoId;
+        clienteFinal = data.vehiculo?.cliente || {
+          id: data.clienteId,
+          nombre: data.clienteNombre || form.clienteNombre.trim(),
+          telefono: data.clienteTelefono || form.clienteTelefono.trim(),
+        };
+      } catch (errUnificado) {
+        if (
+          errUnificado.response?.status &&
+          errUnificado.response.status !== 404 &&
+          errUnificado.response.status !== 405
+        ) {
+          throw errUnificado;
+        }
+
+        // Intento 2: flujo clásico de 3 pasos asegurando siempre clienteId en /vehiculos
+        if (!clienteFinal?.id) {
           const resCliente = await api.post("/clientes", {
             nombre: form.clienteNombre.trim(),
             telefono: form.clienteTelefono.trim(),
             correo: form.clienteCorreo.trim() || null,
-            activo: true,
           });
-          clienteId = resCliente.data.id;
+          clienteFinal = resCliente.data;
         }
-      }
 
-      // 2. Obtener o crear vehículo
-      let vehiculoId = vehiculoSeleccionadoId;
-      const kmActual = Number(form.kilometraje) || 0;
-      const placaLimpia = form.placa.replace(/\s+/g, "").toUpperCase();
-
-      if (!vehiculoId) {
-        try {
-          const resMotoExistente = await api.get(`/vehiculos/placa/${placaLimpia}`);
-          vehiculoId = resMotoExistente.data.id;
-        } catch {
+        if (!vehiculoIdFinal) {
           const resVehiculo = await api.post("/vehiculos", {
-            clienteId,
+            clienteId: clienteFinal.id,
+            cliente: { id: clienteFinal.id },
             placa: placaLimpia,
             marca: form.marca.trim(),
             modelo: form.modelo.trim(),
-            cilindrajeCc: Number(form.cilindrajeCc) || 150,
+            cilindrajeCc: form.cilindrajeCc ? Number(form.cilindrajeCc) : 150,
             kilometraje: kmActual,
-            fotoVehiculo: form.fotoVehiculo || null,
-            activo: true,
           });
-          vehiculoId = resVehiculo.data.id;
+          vehiculoIdFinal = resVehiculo.data.id;
         }
+
+        await api.post("/ordenes-servicio", {
+          vehiculoId: vehiculoIdFinal,
+          kilometrajeIngreso: kmActual,
+          motivoIngreso: form.motivoIngreso.trim(),
+          valorTotal: form.valorTotal ? Number(form.valorTotal) : 0,
+        });
       }
 
-      // 3. Crear orden de servicio
-      await ordenService.crear({
-        vehiculoId,
-        kilometrajeIngreso: kmActual,
-        motivoIngreso: form.motivoIngreso.trim(),
-        valorTotal: form.valorTotal ? Number(form.valorTotal) : 0,
-        estado: "RECIBIDO",
+      actualizarCachesLocales(clienteFinal, {
+        id: vehiculoIdFinal,
+        placa: placaLimpia,
+        marca: form.marca.trim(),
+        modelo: form.modelo.trim(),
+        cilindrajeCc: form.cilindrajeCc ? Number(form.cilindrajeCc) : 150,
+        kilometraje: kmActual,
       });
+
+      if (form.fotoVehiculo && vehiculoIdFinal) {
+        try {
+          await api.patch(`/vehiculos/${vehiculoIdFinal}/foto`, {
+            fotoVehiculo: form.fotoVehiculo,
+          });
+        } catch {
+          // Si falla la foto no bloquea la creación
+        }
+      }
 
       navigate("/panel");
     } catch (err) {
@@ -211,7 +312,6 @@ export default function Recepcion() {
 
       {error && <div className="error-banner">{error}</div>}
 
-      {/* Selector Rápido de Cliente Existente */}
       <div className="card" style={{ borderLeft: "4px solid var(--accent-brand)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
           <label style={{ fontSize: "0.82rem", fontWeight: 700, textTransform: "uppercase", color: "var(--accent-brand)" }}>
@@ -260,7 +360,6 @@ export default function Recepcion() {
         )}
       </div>
 
-      {/* 1. Datos del Cliente */}
       <div className="card">
         <h3 className="section-title">1. Datos del Cliente</h3>
         <div className="form-grid-2">
@@ -292,11 +391,9 @@ export default function Recepcion() {
         </div>
       </div>
 
-      {/* 2. Datos de la Motocicleta */}
       <div className="card">
         <h3 className="section-title">2. Datos de la Motocicleta</h3>
 
-        {/* Si el cliente tiene motos guardadas, mostrar selector rápido */}
         {motosDelCliente.length > 0 && (
           <div style={{ marginBottom: "1rem" }}>
             <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 600, color: "var(--text-secondary)", marginBottom: "0.45rem" }}>
@@ -318,7 +415,7 @@ export default function Recepcion() {
                 type="button"
                 onClick={() => {
                   setVehiculoSeleccionadoId(null);
-                  setForm((prev) => ({ ...prev, placa: "", marca: "", modelo: "", cilindrajeCc: "150", kilometraje: "0" }));
+                  setForm((prev) => ({ ...prev, placa: "", marca: "", modelo: "", cilindrajeCc: "", kilometraje: "" }));
                 }}
                 className={!vehiculoSeleccionadoId ? "btn-primary" : "btn-secondary"}
                 style={{ fontSize: "0.84rem" }}
@@ -372,22 +469,21 @@ export default function Recepcion() {
           </div>
 
           <div className="form-group">
-            <label>Cilindraje (cc) *</label>
+            <label>Cilindraje (cc) (Opcional)</label>
             <input
               name="cilindrajeCc"
               type="number"
-              min="50"
+              min="40"
               className="input-field"
               placeholder="Ej: 200"
               value={form.cilindrajeCc}
               onChange={handleChange}
               disabled={Boolean(vehiculoSeleccionadoId)}
-              required
             />
           </div>
 
           <div className="form-group">
-            <label>Kilometraje de ingreso *</label>
+            <label>Kilometraje de ingreso</label>
             <input
               name="kilometraje"
               type="number"
@@ -396,16 +492,15 @@ export default function Recepcion() {
               placeholder="Ej: 18500"
               value={form.kilometraje}
               onChange={handleChange}
-              required
             />
           </div>
         </div>
 
         <div className="form-group" style={{ marginTop: "0.5rem" }}>
           <label>Foto de ingreso (se comprime automáticamente)</label>
-          <label className="btn-secondary" style={{ width: "fit-content" }}>
+          <label className="btn-secondary" style={{ width: "fit-content", cursor: "pointer" }}>
             <Camera size={17} /> Tomar o subir foto
-            <input type="file" accept="image/*" onChange={handleFoto} hidden />
+            <input type="file" accept="image/*" capture="environment" onChange={handleFoto} hidden />
           </label>
           {infoCompresion && (
             <span style={{ fontSize: "0.78rem", color: "var(--accent-brand)", fontWeight: 600 }}>
@@ -416,7 +511,6 @@ export default function Recepcion() {
         </div>
       </div>
 
-      {/* 3. Orden de Servicio */}
       <div className="card">
         <h3 className="section-title">3. Orden de Servicio</h3>
         <div className="form-group">

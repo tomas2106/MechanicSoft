@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/vehiculos")
@@ -42,7 +43,7 @@ public class VehiculoController {
             @RequestHeader(value = "X-Taller-Id", required = false) Long tallerId,
             @PathVariable String placa) {
         return service.buscarPorPlaca(placa, tallerId)
-                .orElseThrow(() -> new RuntimeException("Vehículo no encontrado."));
+                .orElseThrow(() -> new RuntimeException("Vehículo no encontrado con esa placa."));
     }
 
     @GetMapping("/cliente/{clienteId}")
@@ -56,6 +57,30 @@ public class VehiculoController {
             @PathVariable Long id,
             @Valid @RequestBody VehiculoRequest request) {
         return service.actualizar(id, request, tallerId);
+    }
+
+    @PatchMapping("/{id}/foto")
+    public Vehiculo actualizarFoto(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> payload) {
+        Vehiculo vehiculo = service.buscarPorId(id)
+                .orElseThrow(() -> new RuntimeException("Vehículo no encontrado."));
+
+        String nuevaFoto = payload.get("fotoVehiculo");
+        VehiculoRequest req = new VehiculoRequest();
+        req.setPlaca(vehiculo.getPlaca());
+        req.setMarca(vehiculo.getMarca());
+        req.setModelo(vehiculo.getModelo());
+        req.setAnio(vehiculo.getAnio());
+        req.setCilindrajeCc(vehiculo.getCilindrajeCc());
+        req.setColor(vehiculo.getColor());
+        req.setKilometraje(vehiculo.getKilometraje());
+        req.setObservaciones(vehiculo.getObservaciones());
+        req.setClienteId(vehiculo.getCliente().getId());
+        req.setFotoVehiculo(nuevaFoto);
+
+        Long tallerId = vehiculo.getTaller() != null ? vehiculo.getTaller().getId() : null;
+        return service.actualizar(id, req, tallerId);
     }
 
     @DeleteMapping("/{id}")

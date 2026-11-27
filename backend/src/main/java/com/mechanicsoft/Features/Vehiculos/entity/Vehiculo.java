@@ -1,11 +1,11 @@
 package com.mechanicsoft.Features.Vehiculos.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mechanicsoft.Features.Clientes.entity.Cliente;
 import com.mechanicsoft.Features.Talleres.entity.Taller;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,19 +48,16 @@ public class Vehiculo {
     @Column(name = "anio")
     private Integer anio;
 
-    @NotNull(message = "El cilindraje es obligatorio")
-    @Min(value = 40, message = "El cilindraje debe ser válido")
     @Column(name = "cilindraje_cc")
     private Integer cilindrajeCc = 150;
 
     @Column(length = 50)
     private String color;
 
-    @NotNull(message = "El kilometraje es obligatorio")
-    @Min(value = 0, message = "El kilometraje no puede ser negativo")
     @Column(nullable = false)
     private Integer kilometraje = 0;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     @Column(name = "foto_vehiculo", columnDefinition = "TEXT")
     private String fotoVehiculo;
 
@@ -71,7 +68,8 @@ public class Vehiculo {
     @JoinColumn(name = "cliente_id", nullable = false)
     private Cliente cliente;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "taller_id")
     private Taller taller;
 
@@ -94,6 +92,9 @@ public class Vehiculo {
         }
         if (this.kilometraje == null || this.kilometraje < 0) {
             this.kilometraje = 0;
+        }
+        if (this.activo == null) {
+            this.activo = true;
         }
         LocalDateTime ahora = LocalDateTime.now(ZONA_COLOMBIA);
         createdAt = ahora;

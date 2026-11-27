@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
-import { Plus, ShoppingCart, MessageCircle, Printer, Package, Lock, Edit3, Check } from "lucide-react";
+import { Plus, ShoppingCart, MessageCircle, Printer, Package, Lock, Edit3, Check, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { normalizarTelefonoCO } from "../../utils/phoneCO";
-
-const PRODUCTOS_BASE = [
-  { id: 1, nombre: "Aceite Motul 5100 10W-40", precio: 58000, stock: 12 },
-  { id: 2, nombre: "Kit de Arrastre Reforzado", precio: 165000, stock: 5 },
-];
+import api from "../../services/api";
 
 export default function VentasInventario() {
   const { user, taller } = useAuth();
@@ -21,9 +17,9 @@ export default function VentasInventario() {
   const [productos, setProductos] = useState(() => {
     try {
       const saved = localStorage.getItem(`ms_inventario_${tallerKey}`);
-      return saved ? JSON.parse(saved) : PRODUCTOS_BASE;
+      return saved ? JSON.parse(saved) : [];
     } catch {
-      return PRODUCTOS_BASE;
+      return [];
     }
   });
 
@@ -42,12 +38,38 @@ export default function VentasInventario() {
   const [nuevoStockValor, setNuevoStockValor] = useState(0);
 
   const [venta, setVenta] = useState({
-    productoId: String(productos[0]?.id || "1"),
+    productoId: "",
     cantidad: 1,
     clienteNombre: "",
     clienteTelefono: "",
   });
   const [ultimaFactura, setUltimaFactura] = useState(null);
+
+  useEffect(() => {
+    api
+      .get("/inventario")
+      .then((res) => {
+        if (Array.isArray(res.data)) {
+          const normalizados = res.data.map((p) => ({
+            ...p,
+            precio: p.precioVenta ?? p.precio ?? 0,
+          }));
+          setProductos(normalizados);
+          localStorage.setItem(`ms_inventario_${tallerKey}`, JSON.stringify(normalizados));
+          if (normalizados.length > 0) {
+            setVenta((prev) => ({
+              ...prev,
+              productoId: prev.productoId || String(normalizados[0].id),
+            }));
+          }
+        }
+      })
+      .catch(() => {
+        if (productos.length > 0 && !venta.productoId) {
+          setVenta((prev) => ({ ...prev, productoId: String(productos[0].id) }));
+        }
+      });
+  }, [tallerKey]);
 
   useEffect(() => {
     localStorage.setItem(`ms_inventario_${tallerKey}`, JSON.stringify(productos));
@@ -86,30 +108,77 @@ export default function VentasInventario() {
     setTimeout(() => setMensajeExito(""), 4000);
   };
 
-  const agregarProducto = (e) => {
+  const agregarProducto = async (e) => {
     e.preventDefault();
     if (!nuevoProd.nombre.trim()) return;
-    const creado = {
-      id: Date.now(),
+
+    const payload = {
       nombre: nuevoProd.nombre.trim(),
-      precio: Number(nuevoProd.precio) || 0,
+      codigo: null,
       stock: Number(nuevoProd.stock) || 0,
+      stockMinimo: 2,
+      precioCompra: 0,
+      precioVenta: Number(nuevoProd.precio) || 0,
     };
-    setProductos((prev) => [creado, ...prev]);
-    setVenta((prev) => ({ ...prev, productoId: String(creado.id) }));
-    setNuevoProd({ nombre: "", precio: "", stock: "" });
-    mostrarAvisoExito(`Producto "${creado.nombre}" agregado correctamente al inventario.`);
+
+    try {
+      const res = await api.post("/inventario", payload);
+      const creado = {
+        ...res.data,
+        precio: res.data.precioVenta ?? payload.precioVenta,
+      };
+      setProductos((prev) => [creado, ...prev]);
+      setVenta((prev) => ({ ...prev, productoId: String(creado.id) }));
+      setNuevoProd({ nombre: "", precio: "", stock: "" });
+      mostrarAvisoExito(`Producto "${creado.nombre}" guardado en el inventario.`);
+    } catch {
+      const creadoLocal = {
+        id: Date.now(),
+        nombre: payload.nombre,
+        precio: payload.precioVenta,
+        stock: payload.stock,
+      };
+      setProductos((prev) => [creadoLocal, ...prev]);
+      setVenta((prev) => ({ ...prev, productoId: String(creadoLocal.id) }));
+      setNuevoProd({ nombre: "", precio: "", stock: "" });
+      mostrarAvisoExito(`Producto "${creadoLocal.nombre}" agregado correctamente al inventario.`);
+    }
   };
 
-  const guardarNuevoStock = (prodId) => {
+  const guardarNuevoStock = async (prod) => {
+    const stockFinal = Math.max(0, Number(nuevoStockValor) || 0);
     setProductos((prev) =>
-      prev.map((p) => (p.id === prodId ? { ...p, stock: Math.max(0, Number(nuevoStockValor) || 0) } : p))
+      prev.map((p) => (p.id === prod.id ? { ...p, stock: stockFinal } : p))
     );
     setEditandoStockId(null);
+
+    try {
+      await api.put(`/inventario/${prod.id}`, {
+        nombre: prod.nombre,
+        codigo: prod.codigo || null,
+        stock: stockFinal,
+        stockMinimo: prod.stockMinimo ?? 2,
+        precioCompra: prod.precioCompra ?? 0,
+        precioVenta: prod.precio ?? 0,
+      });
+    } catch {
+      // Mantiene sincronización local si el ítem aún no existía en BD
+    }
     mostrarAvisoExito("Cantidad en inventario actualizada correctamente.");
   };
 
-  const registrarVenta = (e) => {
+  const eliminarProductoInventario = async (prod) => {
+    if (!window.confirm(`¿Eliminar "${prod.nombre}" del inventario?`)) return;
+    setProductos((prev) => prev.filter((p) => p.id !== prod.id));
+    try {
+      await api.delete(`/inventario/${prod.id}`);
+    } catch {
+      // Ignora si solo existía localmente
+    }
+    mostrarAvisoExito(`Producto "${prod.nombre}" eliminado.`);
+  };
+
+  const registrarVenta = async (e) => {
     e.preventDefault();
     const prod = productos.find((p) => String(p.id) === String(venta.productoId));
     if (!prod) return;
@@ -118,12 +187,31 @@ export default function VentasInventario() {
       return alert("Stock insuficiente para esta venta.");
     }
 
+    const stockRestante = prod.stock - cant;
     setProductos((prev) =>
-      prev.map((p) => (p.id === prod.id ? { ...p, stock: p.stock - cant } : p))
+      prev.map((p) => (p.id === prod.id ? { ...p, stock: stockRestante } : p))
     );
 
+    try {
+      await api.put(`/inventario/${prod.id}`, {
+        nombre: prod.nombre,
+        codigo: prod.codigo || null,
+        stock: stockRestante,
+        stockMinimo: prod.stockMinimo ?? 2,
+        precioCompra: prod.precioCompra ?? 0,
+        precioVenta: prod.precio ?? 0,
+      });
+    } catch {
+      // Fallback local
+    }
+
     const hoy = new Date();
-    const fechaISO = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(hoy.getDate()).padStart(2, "0")}`;
+    const fechaISO = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Bogota",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(hoy);
 
     const total = prod.precio * cant;
     const factura = {
@@ -328,7 +416,7 @@ export default function VentasInventario() {
               <th>Producto</th>
               {esAdminTaller && <th>Valor</th>}
               <th>Stock disponible</th>
-              <th>Editar stock</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -350,11 +438,11 @@ export default function VentasInventario() {
                     `${p.stock} unidades`
                   )}
                 </td>
-                <td>
+                <td style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
                   {editandoStockId === p.id ? (
                     <button
                       type="button"
-                      onClick={() => guardarNuevoStock(p.id)}
+                      onClick={() => guardarNuevoStock(p)}
                       className="btn-accent"
                       style={{ padding: "0.3rem 0.65rem", fontSize: "0.78rem" }}
                     >
@@ -371,6 +459,18 @@ export default function VentasInventario() {
                       title="Modificar cantidad en stock"
                     >
                       <Edit3 size={15} />
+                    </button>
+                  )}
+
+                  {esAdminTaller && (
+                    <button
+                      type="button"
+                      onClick={() => eliminarProductoInventario(p)}
+                      className="icon-btn"
+                      title="Eliminar producto"
+                      style={{ color: "var(--danger)" }}
+                    >
+                      <Trash2 size={15} />
                     </button>
                   )}
                 </td>

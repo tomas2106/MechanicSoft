@@ -41,6 +41,8 @@
 html {
   scroll-behavior: smooth;
   color-scheme: light;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 section[id],
@@ -54,6 +56,12 @@ body {
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
 }
 
 button,
@@ -70,6 +78,7 @@ textarea {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   padding: 1.35rem;
+  min-width: 0;
 }
 
 .section-title {
@@ -183,6 +192,7 @@ textarea.input-field {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .brand-wordmark {
@@ -251,6 +261,14 @@ textarea.input-field {
   border-radius: var(--radius-md);
   font-size: 0.88rem;
   margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 @media (max-width: 640px) {

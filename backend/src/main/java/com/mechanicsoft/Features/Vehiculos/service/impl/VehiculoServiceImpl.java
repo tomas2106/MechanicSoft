@@ -9,6 +9,7 @@ import com.mechanicsoft.Features.Vehiculos.entity.Vehiculo;
 import com.mechanicsoft.Features.Vehiculos.repository.VehiculoRepository;
 import com.mechanicsoft.Features.Vehiculos.service.interfaces.VehiculoService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,28 +43,46 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     @Override
+    @Transactional
     public Vehiculo guardar(VehiculoRequest request, Long tallerIdHeader) {
         String placaNorm = normalizarPlaca(request.getPlaca());
+        if (placaNorm.isEmpty()) {
+            throw new RuntimeException("La placa de la motocicleta es obligatoria.");
+        }
+
+        if (request.getClienteId() == null) {
+            throw new RuntimeException("Debe asociar un cliente válido antes de registrar la motocicleta.");
+        }
 
         Cliente cliente = clienteRepository.findById(request.getClienteId())
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado."));
 
         Taller taller = resolverTaller(tallerIdHeader, request.getTallerId(), cliente);
+        if (taller == null) {
+            throw new RuntimeException("No se pudo identificar el taller activo para registrar la motocicleta.");
+        }
 
-        if (taller != null) {
-            if (repository.existsByPlacaAndTallerIdAndActivoTrue(placaNorm, taller.getId())) {
-                throw new RuntimeException("Ya existe una moto registrada con la placa " + placaNorm + " en este taller.");
-            }
-        } else if (repository.existsByPlacaAndActivoTrue(placaNorm)) {
-            throw new RuntimeException("Ya existe una moto registrada con la placa " + placaNorm + ".");
+        if (cliente.getTaller() == null) {
+            cliente.setTaller(taller);
+            clienteRepository.save(cliente);
+        }
+
+        Optional<Vehiculo> existenteOpt = repository.findByTallerIdAndPlacaIgnoreCase(taller.getId(), placaNorm);
+        if (existenteOpt.isPresent()) {
+            Vehiculo existente = existenteOpt.get();
+            mapearVehiculo(existente, request, cliente, taller, placaNorm);
+            existente.setActivo(true);
+            return repository.save(existente);
         }
 
         Vehiculo vehiculo = new Vehiculo();
         mapearVehiculo(vehiculo, request, cliente, taller, placaNorm);
+        vehiculo.setActivo(true);
         return repository.save(vehiculo);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Vehiculo> listar(Long tallerIdHeader) {
         if (tallerIdHeader != null) {
             return repository.findByTallerIdAndActivoTrue(tallerIdHeader);
@@ -72,23 +91,23 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Vehiculo> buscarPorId(Long id) {
         return repository.findByIdAndActivoTrue(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Vehiculo> buscarPorPlaca(String placa, Long tallerIdHeader) {
         String placaNorm = normalizarPlaca(placa);
         if (tallerIdHeader != null) {
-            Optional<Vehiculo> delTaller = repository.findByPlacaAndTallerIdAndActivoTrue(placaNorm, tallerIdHeader);
-            if (delTaller.isPresent()) {
-                return delTaller;
-            }
+            return repository.findByPlacaAndTallerIdAndActivoTrue(placaNorm, tallerIdHeader);
         }
         return repository.findByPlacaAndActivoTrue(placaNorm);
     }
 
     @Override
+    @Transactional
     public Vehiculo actualizar(Long id, VehiculoRequest request, Long tallerIdHeader) {
         Vehiculo existente = repository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RuntimeException("Vehículo no encontrado."));
@@ -107,6 +126,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     @Override
+    @Transactional
     public void eliminar(Long id) {
         Vehiculo vehiculo = repository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RuntimeException("Vehículo no encontrado."));
@@ -116,6 +136,7 @@ public class VehiculoServiceImpl implements VehiculoService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Vehiculo> buscarPorCliente(Long clienteId) {
         return repository.findByClienteIdAndActivoTrue(clienteId);
     }
@@ -126,13 +147,15 @@ public class VehiculoServiceImpl implements VehiculoService {
                                 Taller taller,
                                 String placaNorm) {
         vehiculo.setPlaca(placaNorm);
-        vehiculo.setMarca(request.getMarca().trim());
-        vehiculo.setModelo(request.getModelo().trim());
+        vehiculo.setMarca(request.getMarca() != null && !request.getMarca().isBlank() ? request.getMarca().trim() : "Sin marca");
+        vehiculo.setModelo(request.getModelo() != null && !request.getModelo().isBlank() ? request.getModelo().trim() : "Sin modelo");
         vehiculo.setAnio(request.getAnio());
         vehiculo.setCilindrajeCc(request.getCilindrajeCc() != null && request.getCilindrajeCc() >= 40 ? request.getCilindrajeCc() : 150);
-        vehiculo.setColor(request.getColor() != null ? request.getColor().trim() : null);
+        vehiculo.setColor(request.getColor() != null && !request.getColor().isBlank() ? request.getColor().trim() : null);
         vehiculo.setKilometraje(request.getKilometraje() != null && request.getKilometraje() >= 0 ? request.getKilometraje() : 0);
-        vehiculo.setFotoVehiculo(request.getFotoVehiculo());
+        if (request.getFotoVehiculo() != null) {
+            vehiculo.setFotoVehiculo(request.getFotoVehiculo());
+        }
         vehiculo.setObservaciones(request.getObservaciones());
         vehiculo.setCliente(cliente);
         if (taller != null) {

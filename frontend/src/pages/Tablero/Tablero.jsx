@@ -28,7 +28,7 @@ import api from "../../services/api";
 import "./Tablero.css";
 
 const ESTADOS = [
-  { id: "TODOS", label: "Activas del día" },
+  { id: "TODOS", label: "Activas" },
   { id: "RECIBIDO", label: "Recibidas" },
   { id: "DIAGNOSTICO", label: "Diagnóstico" },
   { id: "EN_REPARACION", label: "En reparación" },
@@ -37,26 +37,56 @@ const ESTADOS = [
 ];
 
 const hoyISO = () => {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 };
+
+const obtenerTallerKeyInicial = (taller) => {
+  if (taller?.id) return String(taller.id);
+  const storedId = localStorage.getItem("ms_taller_id");
+  if (storedId) return String(storedId);
+  try {
+    const parsed = JSON.parse(localStorage.getItem("ms_taller") || "null");
+    if (parsed?.id) return String(parsed.id);
+  } catch {
+    // Ignorar error de parseo
+  }
+  return "default";
+};
+
+const limpiarFotosOrdenes = (lista) =>
+  lista.map((o) => ({
+    ...o,
+    vehiculo: o.vehiculo ? { ...o.vehiculo, fotoVehiculo: null } : null,
+  }));
 
 export default function Tablero() {
   const { user, taller, actualizarTaller } = useAuth();
   const esAdminTaller = user?.rol === "ADMIN_TALLER";
-  const tallerKey = taller?.id || "default";
+  const tallerKey = obtenerTallerKeyInicial(taller);
+  const cacheKeyOrdenes = `ms_ordenes_${tallerKey}`;
 
-  const [ordenes, setOrdenes] = useState([]);
+  const [ordenes, setOrdenes] = useState(() => {
+    try {
+      const guardadas = localStorage.getItem(cacheKeyOrdenes);
+      return guardadas ? JSON.parse(guardadas) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [fechaSeleccionada, setFechaSeleccionada] = useState(hoyISO());
-  const [periodoBalance, setPeriodoBalance] = useState("DIA"); // DIA | MES | ANO
-  const [tipoBalance, setTipoBalance] = useState("TODO"); // TODO | MANTENIMIENTOS | VENTAS
-  const [filtroPeriodoEntregadas, setFiltroPeriodoEntregadas] = useState("TODAS"); // TODAS | DIA | MES | ANO
+  const [periodoBalance, setPeriodoBalance] = useState("DIA");
+  const [tipoBalance, setTipoBalance] = useState("TODO");
+  const [filtroPeriodoEntregadas, setFiltroPeriodoEntregadas] = useState("DIA");
   const [filtro, setFiltro] = useState("TODOS");
   const [busquedaGarantia, setBusquedaGarantia] = useState("");
-  const [cargando, setCargando] = useState(true);
+  const [cargando, setCargando] = useState(() => ordenes.length === 0);
+  const [sincronizando, setSincronizando] = useState(false);
   const [cambiandoJornada, setCambiandoJornada] = useState(false);
   const [error, setError] = useState("");
 
@@ -66,67 +96,118 @@ export default function Tablero() {
   const [modalCierreCaja, setModalCierreCaja] = useState(false);
   const [guardandoDetalle, setGuardandoDetalle] = useState(false);
 
-  // Inventario y ventas locales del taller para sumar repuestos en órdenes y en cierre de caja
-  const [inventarioTaller, setInventarioTaller] = useState([]);
-  const [ventasTaller, setVentasTaller] = useState([]);
+  const [inventarioTaller, setInventarioTaller] = useState(() => {
+    try {
+      const inv = JSON.parse(localStorage.getItem(`ms_inventario_${tallerKey}`) || "[]");
+      return Array.isArray(inv) ? inv : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [ventasTaller, setVentasTaller] = useState(() => {
+    try {
+      const vts = JSON.parse(localStorage.getItem(`ms_ventas_${tallerKey}`) || "[]");
+      return Array.isArray(vts) ? vts : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [productoSeleccionadoId, setProductoSeleccionadoId] = useState("");
   const [cantidadProductoUsado, setCantidadProductoUsado] = useState(1);
 
-  const cargarInventarioYVentas = () => {
+  const guardarCacheLigero = (lista) => {
     try {
-      const inv = JSON.parse(localStorage.getItem(`ms_inventario_${tallerKey}`) || "[]");
-      setInventarioTaller(Array.isArray(inv) ? inv : []);
-      if (Array.isArray(inv) && inv.length > 0 && !productoSeleccionadoId) {
-        setProductoSeleccionadoId(String(inv[0].id));
-      }
+      localStorage.setItem(cacheKeyOrdenes, JSON.stringify(limpiarFotosOrdenes(lista)));
     } catch {
-      setInventarioTaller([]);
+      // Ignorar si localStorage está lleno
     }
+  };
+
+  const cargarInventarioYVentas = async () => {
     try {
       const vts = JSON.parse(localStorage.getItem(`ms_ventas_${tallerKey}`) || "[]");
       setVentasTaller(Array.isArray(vts) ? vts : []);
     } catch {
       setVentasTaller([]);
     }
+
+    try {
+      const resInv = await api.get("/inventario");
+      if (Array.isArray(resInv.data)) {
+        const normalizado = resInv.data.map((item) => ({
+          ...item,
+          precio: item.precioVenta ?? item.precio ?? 0,
+        }));
+        setInventarioTaller(normalizado);
+        localStorage.setItem(`ms_inventario_${tallerKey}`, JSON.stringify(normalizado));
+        if (normalizado.length > 0) {
+          setProductoSeleccionadoId((prev) => prev || String(normalizado[0].id));
+        }
+      }
+    } catch {
+      try {
+        const inv = JSON.parse(localStorage.getItem(`ms_inventario_${tallerKey}`) || "[]");
+        const listaInv = Array.isArray(inv) ? inv : [];
+        setInventarioTaller(listaInv);
+        if (listaInv.length > 0) {
+          setProductoSeleccionadoId((prev) => prev || String(listaInv[0].id));
+        }
+      } catch {
+        setInventarioTaller([]);
+      }
+    }
   };
 
-  // Evitar que se mueva el fondo cuando cualquier modal está abierto
   const hayModalAbierto = Boolean(
     modalCierreOrden || ordenEditando || ordenComprobante || modalCierreCaja
   );
   useEffect(() => {
-    if (hayModalAbierto) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = hayModalAbierto ? "hidden" : "";
     return () => {
       document.body.style.overflow = "";
     };
   }, [hayModalAbierto]);
 
   const cargarOrdenes = async () => {
-    setCargando(true);
+    if (ordenes.length === 0) setCargando(true);
+    setSincronizando(true);
     setError("");
-    cargarInventarioYVentas();
+
+    const timerDesbloqueo = setTimeout(() => {
+      setCargando(false);
+    }, 3500);
+
     try {
       const res = await ordenService.obtenerTodas();
-      const lista = Array.isArray(res.data) ? res.data : [];
+      const raw = Array.isArray(res.data) ? res.data : [];
+      const lista = limpiarFotosOrdenes(raw);
       lista.sort(
         (a, b) =>
           (a.prioridadOrden ?? a.id) - (b.prioridadOrden ?? b.id) || b.id - a.id
       );
       setOrdenes(lista);
+      guardarCacheLigero(lista);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     } finally {
+      clearTimeout(timerDesbloqueo);
       setCargando(false);
+      setSincronizando(false);
     }
   };
 
   useEffect(() => {
     setFechaSeleccionada(hoyISO());
     cargarOrdenes();
+
+    try {
+      const vts = JSON.parse(localStorage.getItem(`ms_ventas_${tallerKey}`) || "[]");
+      setVentasTaller(Array.isArray(vts) ? vts : []);
+    } catch {
+      setVentasTaller([]);
+    }
 
     if (taller?.slug) {
       api
@@ -141,7 +222,7 @@ export default function Tablero() {
         })
         .catch(() => {});
     }
-  }, []);
+  }, [tallerKey]);
 
   const marcarTallerAbierto = async () => {
     if (!taller?.id || taller?.abiertoHoy) return;
@@ -184,6 +265,29 @@ export default function Tablero() {
 
     const normalizada = copia.map((item, i) => ({ ...item, prioridadOrden: i + 1 }));
     setOrdenes(normalizada);
+    guardarCacheLigero(normalizada);
+  };
+
+  const eliminarOrdenRegistro = async (orden) => {
+    const placa = orden.vehiculo?.placa || `#${orden.id}`;
+    if (!window.confirm(`¿Seguro que deseas eliminar la orden de ${placa}?`)) {
+      return;
+    }
+
+    try {
+      if (typeof ordenService.eliminar === "function") {
+        await ordenService.eliminar(orden.id);
+      } else {
+        await api.delete(`/ordenes-servicio/${orden.id}`);
+      }
+      setOrdenes((prev) => {
+        const filtradas = prev.filter((o) => o.id !== orden.id);
+        guardarCacheLigero(filtradas);
+        return filtradas;
+      });
+    } catch (err) {
+      alert("No se pudo eliminar la orden: " + (err.response?.data?.message || err.message));
+    }
   };
 
   const abrirModalCierreConRepuestos = (orden) => {
@@ -206,9 +310,13 @@ export default function Tablero() {
 
     try {
       await ordenService.actualizarEstado(orden.id, nuevoEstado);
-      setOrdenes((prev) =>
-        prev.map((o) => (o.id === orden.id ? { ...o, estado: nuevoEstado } : o))
-      );
+      setOrdenes((prev) => {
+        const actualizadas = prev.map((o) =>
+          o.id === orden.id ? { ...o, estado: nuevoEstado } : o
+        );
+        guardarCacheLigero(actualizadas);
+        return actualizadas;
+      });
     } catch (err) {
       alert("No se pudo actualizar el estado: " + err.message);
     }
@@ -269,7 +377,6 @@ export default function Tablero() {
     const { orden, manoObra, repuestosUsados, diagnostico, trabajoRealizado } = modalCierreOrden;
     setGuardandoDetalle(true);
 
-    // Construir descripción clara con mano de obra + repuestos usados para que el cliente lo vea
     const detalleRepuestosTexto =
       repuestosUsados.length > 0
         ? ` | Repuestos usados: ${repuestosUsados
@@ -293,7 +400,6 @@ export default function Tablero() {
       };
       const res = await ordenService.actualizar(orden.id, payload);
 
-      // Descontar del inventario los repuestos usados en esta reparación
       if (repuestosUsados.length > 0) {
         const invActualizado = inventarioTaller.map((item) => {
           const usado = repuestosUsados.find((r) => r.id === item.id);
@@ -301,15 +407,41 @@ export default function Tablero() {
         });
         setInventarioTaller(invActualizado);
         localStorage.setItem(`ms_inventario_${tallerKey}`, JSON.stringify(invActualizado));
+
+        for (const usado of repuestosUsados) {
+          const orig = inventarioTaller.find((i) => i.id === usado.id);
+          if (orig && typeof orig.id === "number") {
+            api
+              .put(`/inventario/${orig.id}`, {
+                nombre: orig.nombre,
+                codigo: orig.codigo || null,
+                stock: Math.max(0, orig.stock - usado.cantidad),
+                stockMinimo: orig.stockMinimo ?? 2,
+                precioCompra: orig.precioCompra ?? 0,
+                precioVenta: orig.precio ?? 0,
+              })
+              .catch(() => {});
+          }
+        }
       }
 
-      setOrdenes((prev) =>
-        prev.map((o) =>
+      setOrdenes((prev) => {
+        const actualizadas = prev.map((o) =>
           o.id === orden.id
-            ? { ...o, ...res.data, trabajoRealizado: trabajoFinalTexto, valorTotal: totalGeneralModal, estado: "ENTREGADO", fechaEntrega: new Date().toISOString() }
+            ? {
+                ...o,
+                ...res.data,
+                vehiculo: o.vehiculo,
+                trabajoRealizado: trabajoFinalTexto,
+                valorTotal: totalGeneralModal,
+                estado: "ENTREGADO",
+                fechaEntrega: new Date().toISOString(),
+              }
             : o
-        )
-      );
+        );
+        guardarCacheLigero(actualizadas);
+        return actualizadas;
+      });
       setModalCierreOrden(null);
     } catch (err) {
       alert("Error al registrar entrega: " + (err.response?.data?.message || err.message));
@@ -336,9 +468,13 @@ export default function Tablero() {
         estado: ordenEditando.estado,
       };
       const res = await ordenService.actualizar(ordenEditando.id, payload);
-      setOrdenes((prev) =>
-        prev.map((o) => (o.id === ordenEditando.id ? { ...o, ...res.data } : o))
-      );
+      setOrdenes((prev) => {
+        const actualizadas = prev.map((o) =>
+          o.id === ordenEditando.id ? { ...o, ...res.data, vehiculo: o.vehiculo } : o
+        );
+        guardarCacheLigero(actualizadas);
+        return actualizadas;
+      });
       setOrdenEditando(null);
     } catch (err) {
       alert("Error al guardar ficha: " + (err.response?.data?.message || err.message));
@@ -347,22 +483,14 @@ export default function Tablero() {
     }
   };
 
-  const ordenesDelDia = ordenes.filter((o) => {
-    const fechaOrd = (o.fechaIngreso || hoyISO()).slice(0, 10);
-    if (o.estado === "ENTREGADO") {
-      return fechaOrd === fechaSeleccionada;
-    }
-    return fechaOrd <= fechaSeleccionada;
-  });
-
-  const ordenesActivasPantallaPrincipal = ordenesDelDia.filter(
+  // TODAS las motos que no han sido entregadas ni canceladas siguen apareciendo cada día hasta terminarlas
+  const ordenesActivasPantallaPrincipal = ordenes.filter(
     (o) => o.estado !== "ENTREGADO" && o.estado !== "CANCELADO"
   );
 
   const entregadas = ordenes.filter((o) => o.estado === "ENTREGADO");
   const [anioSel, mesSel] = fechaSeleccionada.split("-");
 
-  // Filtro de entregadas por Día, Mes, Año o Todas + buscador
   const entregadasFiltradasGarantia = entregadas.filter((o) => {
     const fechaRef = (o.fechaEntrega || o.fechaIngreso || hoyISO()).slice(0, 10);
     if (filtroPeriodoEntregadas === "DIA" && fechaRef !== fechaSeleccionada) return false;
@@ -384,7 +512,6 @@ export default function Tablero() {
       ? ordenesActivasPantallaPrincipal
       : ordenesActivasPantallaPrincipal.filter((o) => o.estado === filtro);
 
-  // Cálculos de Cierre de Caja y Balance (Mantenimientos + Ventas de Productos)
   const coincideFechaPeriodo = (fechaISO, periodo) => {
     const f = (fechaISO || hoyISO()).slice(0, 10);
     if (periodo === "DIA") return f === fechaSeleccionada;
@@ -409,7 +536,6 @@ export default function Tablero() {
   );
   const totalHoyGeneral = totalMantenimientosHoy + totalVentasHoy;
 
-  // Balance según periodoBalance (DIA / MES / ANO) y tipoBalance (TODO / MANTENIMIENTOS / VENTAS)
   const ingresosMantenimientosPeriodo = entregadas
     .filter((o) => coincideFechaPeriodo(o.fechaEntrega || o.fechaIngreso, periodoBalance))
     .reduce((acc, o) => acc + (Number(o.valorTotal) || 0), 0);
@@ -436,7 +562,6 @@ export default function Tablero() {
         )
       : 24;
 
-  // Exportar Cierre de Caja a Excel (.csv) incluyendo Servicios + Ventas de productos
   const descargarExcelCierreCaja = () => {
     const filas = [
       ["TALLER", taller?.nombre || "Taller"],
@@ -481,7 +606,6 @@ export default function Tablero() {
     URL.revokeObjectURL(url);
   };
 
-  // Exportar PDF de Cierre de Caja
   const guardarPdfCierreCaja = () => {
     const ventana = window.open("", "_blank", "width=850,height=700");
     if (!ventana) return;
@@ -595,10 +719,15 @@ export default function Tablero() {
             >
               {tallerEstaAbierto ? "Taller Abierto • Trabajando ahora" : "Taller Cerrado"}
             </span>
+            {sincronizando && (
+              <span style={{ fontSize: "0.76rem", color: "var(--accent-brand)", fontWeight: 600 }}>
+                Actualizando...
+              </span>
+            )}
           </div>
           <p style={{ color: "var(--text-secondary)", fontSize: "0.86rem" }}>
             {esAdminTaller
-              ? "Filtra por fecha para revisar el cierre diario, mensual o anual y las entregas"
+              ? "Las motos activas permanecen en el tablero hasta su entrega"
               : `Panel técnico de ${user?.nombre || "Mecánico"} • Recepción, estados y consulta de garantías`}
           </p>
         </div>
@@ -609,8 +738,12 @@ export default function Tablero() {
             className="input-field"
             style={{ width: "auto", minHeight: 38 }}
             value={fechaSeleccionada}
-            onChange={(e) => setFechaSeleccionada(e.target.value || hoyISO())}
-            title="Seleccionar fecha para ver jornada y cierre"
+            onChange={(e) => {
+              const nuevaFecha = e.target.value || hoyISO();
+              setFechaSeleccionada(nuevaFecha);
+              setFiltroPeriodoEntregadas("DIA");
+            }}
+            title="Seleccionar fecha para cierre de caja y entregadas"
           />
 
           {tallerEstaAbierto ? (
@@ -660,7 +793,10 @@ export default function Tablero() {
             </span>
             <button
               type="button"
-              onClick={() => setModalCierreCaja(true)}
+              onClick={() => {
+                cargarInventarioYVentas();
+                setModalCierreCaja(true);
+              }}
               className="btn-secondary"
               style={{ marginTop: "0.5rem", width: "100%", fontSize: "0.78rem", padding: "0.4rem 0.6rem" }}
             >
@@ -720,10 +856,10 @@ export default function Tablero() {
           title="Ver motos entregadas y garantías"
         >
           <div className="kpi-top">
-            <span>Entregadas / Garantías</span>
+            <span>Entregadas ({fechaSeleccionada})</span>
             <ShieldCheck size={16} />
           </div>
-          <div className="kpi-value">{entregadas.length}</div>
+          <div className="kpi-value">{ordenesEntregadasFechaSeleccionada.length}</div>
         </div>
 
         <div className="kpi-card">
@@ -740,7 +876,7 @@ export default function Tablero() {
         {ESTADOS.map((est) => {
           const count =
             est.id === "ENTREGADAS_GARANTIA"
-              ? entregadas.length
+              ? entregadasFiltradasGarantia.length
               : est.id === "TODOS"
               ? ordenesActivasPantallaPrincipal.length
               : ordenesActivasPantallaPrincipal.filter((o) => o.estado === est.id).length;
@@ -776,10 +912,10 @@ export default function Tablero() {
 
             <div style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
               {[
-                { id: "TODAS", label: "Todas" },
                 { id: "DIA", label: `Día (${fechaSeleccionada})` },
                 { id: "MES", label: `Mes (${anioSel}-${mesSel})` },
                 { id: "ANO", label: `Año (${anioSel})` },
+                { id: "TODAS", label: "Todas" },
               ].map((p) => (
                 <button
                   key={p.id}
@@ -797,16 +933,16 @@ export default function Tablero() {
 
       {error && <div className="error-banner">{error}</div>}
 
-      {cargando ? (
+      {cargando && ordenes.length === 0 ? (
         <div className="card" style={{ textAlign: "center", padding: "2.5rem", color: "var(--text-secondary)" }}>
-          Cargando jornada del taller...
+          Cargando órdenes del taller...
         </div>
       ) : ordenesVisibles.length === 0 ? (
         <div className="card" style={{ textAlign: "center", padding: "2.5rem" }}>
           <p style={{ color: "var(--text-secondary)", marginBottom: "0.9rem" }}>
             {filtro === "ENTREGADAS_GARANTIA"
-              ? "No hay motos entregadas en el periodo o búsqueda seleccionada."
-              : "No hay motocicletas activas pendientes en este filtro para la fecha seleccionada."}
+              ? "No hay motos entregadas en la fecha seleccionada. Cambia la fecha arriba o toca 'Todas' para ver el historial."
+              : "No hay motocicletas activas en este estado."}
           </p>
           {filtro !== "ENTREGADAS_GARANTIA" && (
             <Link to="/panel/recepcion" className="btn-accent" style={{ textDecoration: "none" }}>
@@ -873,10 +1009,6 @@ export default function Tablero() {
                     </span>
                   </div>
 
-                  {v.fotoVehiculo && (
-                    <img src={v.fotoVehiculo} alt={v.placa} className="orden-thumb" />
-                  )}
-
                   <p style={{ fontSize: "0.88rem", marginTop: "0.7rem" }}>
                     <strong>Motivo:</strong> {orden.motivoIngreso}
                   </p>
@@ -925,6 +1057,16 @@ export default function Tablero() {
                   <button onClick={() => enviarWhatsAppOrden(orden)} className="icon-btn" title="WhatsApp" style={{ color: "var(--accent-brand)" }}>
                     <MessageCircle size={16} />
                   </button>
+                  {esAdminTaller && (
+                    <button
+                      onClick={() => eliminarOrdenRegistro(orden)}
+                      className="icon-btn"
+                      title="Eliminar orden"
+                      style={{ color: "var(--danger)" }}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -932,7 +1074,7 @@ export default function Tablero() {
         </div>
       )}
 
-      {/* Modal Cierre de Caja (Solo Admin Taller) */}
+      {/* Modal Cierre de Caja */}
       {modalCierreCaja && esAdminTaller && (
         <div className="modal-backdrop" onClick={() => setModalCierreCaja(false)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 640, maxHeight: "90vh", overflowY: "auto" }}>
@@ -1041,7 +1183,7 @@ export default function Tablero() {
         </div>
       )}
 
-      {/* Modal al Finalizar / Entregar Orden: Mano de Obra + Repuestos del Inventario */}
+      {/* Modal al Finalizar / Entregar Orden */}
       {modalCierreOrden && (
         <div className="modal-backdrop" onClick={() => setModalCierreOrden(null)}>
           <div className="modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 540, maxHeight: "90vh", overflowY: "auto" }}>
@@ -1084,7 +1226,6 @@ export default function Tablero() {
                 />
               </div>
 
-              {/* Selector de Repuestos / Productos del Taller */}
               {inventarioTaller.length > 0 && (
                 <div className="form-group" style={{ backgroundColor: "var(--bg-app)", padding: "0.8rem", borderRadius: 8, border: "1px solid var(--border-color)" }}>
                   <label style={{ display: "block", marginBottom: "0.45rem" }}>
@@ -1152,7 +1293,6 @@ export default function Tablero() {
                 </div>
               )}
 
-              {/* Resumen Total */}
               <div
                 style={{
                   backgroundColor: "var(--primary-soft)",

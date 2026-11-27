@@ -6,6 +6,7 @@ import com.mechanicsoft.Features.Clientes.service.interfaces.ClienteService;
 import com.mechanicsoft.Features.Talleres.entity.Taller;
 import com.mechanicsoft.Features.Talleres.repository.TallerRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +22,7 @@ public class ClienteServiceImpl implements ClienteService {
         this.tallerRepository = tallerRepository;
     }
 
-    private String normalizarTelefonoCO(String raw) {
+    public static String normalizarTelefonoCO(String raw) {
         if (raw == null) return "";
         String digits = raw.replaceAll("\\D+", "");
         if (digits.isEmpty()) return "";
@@ -42,6 +43,7 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    @Transactional
     public Cliente guardar(Cliente cliente, Long tallerIdHeader) {
         String telNorm = normalizarTelefonoCO(cliente.getTelefono());
         if (telNorm.isEmpty()) {
@@ -54,44 +56,56 @@ public class ClienteServiceImpl implements ClienteService {
         }
 
         Taller taller = resolverTaller(tallerIdHeader, cliente);
-        if (taller != null) {
-            cliente.setTaller(taller);
-            if (repository.findByTelefonoAndTallerIdAndActivoTrue(telNorm, taller.getId()).isPresent()) {
-                throw new RuntimeException("Ya existe un cliente registrado con ese WhatsApp en este taller.");
+        if (taller == null) {
+            throw new RuntimeException("No se pudo identificar el taller activo para registrar el cliente.");
+        }
+        cliente.setTaller(taller);
+
+        // Si ya existe en este taller (activo o inactivo), actualizar nombre y reutilizarlo sin bloquear
+        Optional<Cliente> existenteOpt = repository.findByTallerIdAndTelefono(taller.getId(), telNorm);
+        if (existenteOpt.isPresent()) {
+            Cliente existente = existenteOpt.get();
+            if (cliente.getNombre() != null && !cliente.getNombre().isBlank()) {
+                existente.setNombre(cliente.getNombre().trim());
             }
-        } else if (repository.findByTelefonoAndActivoTrue(telNorm).isPresent()) {
-            throw new RuntimeException("Ya existe un cliente registrado con ese teléfono.");
+            if (cliente.getCorreo() != null) {
+                existente.setCorreo(cliente.getCorreo());
+            }
+            existente.setActivo(true);
+            return repository.save(existente);
         }
 
+        cliente.setActivo(true);
         return repository.save(cliente);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Cliente> listar(Long tallerIdHeader) {
         if (tallerIdHeader != null) {
-            return repository.findByTallerIdAndActivoTrue(tallerIdHeader);
+            return repository.findByTallerIdAndActivoTrueOrderByNombreAsc(tallerIdHeader);
         }
         return repository.findByActivoTrue();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Cliente> buscarPorId(Long id) {
         return repository.findByIdAndActivoTrue(id);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<Cliente> buscarPorTelefono(String telefono, Long tallerIdHeader) {
         String telNorm = normalizarTelefonoCO(telefono);
         if (tallerIdHeader != null) {
-            Optional<Cliente> delTaller = repository.findByTelefonoAndTallerIdAndActivoTrue(telNorm, tallerIdHeader);
-            if (delTaller.isPresent()) {
-                return delTaller;
-            }
+            return repository.findByTelefonoAndTallerIdAndActivoTrue(telNorm, tallerIdHeader);
         }
         return repository.findByTelefonoAndActivoTrue(telNorm);
     }
 
     @Override
+    @Transactional
     public Cliente actualizar(Long id, Cliente cliente, Long tallerIdHeader) {
         Cliente existente = repository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado."));
@@ -112,6 +126,7 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
+    @Transactional
     public void eliminar(Long id) {
         Cliente cliente = repository.findByIdAndActivoTrue(id)
                 .orElseThrow(() -> new RuntimeException("Cliente no encontrado."));
